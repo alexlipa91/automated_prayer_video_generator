@@ -15,12 +15,13 @@ class VideoBuilder:
         self.year = str(year)
         self.month = str(month).zfill(2)
         self.day = str(day).zfill(2)
-        self.folder = "{}{}{}".format(str(year), str(month), str(day))
+        self.folder = "{}{}{}".format(self.year, self.month, self.day)
         try:
             os.mkdir(self.folder)
         except FileExistsError:
             pass
         self.audio_path = None
+        self.audio_duration = 0
 
     def download_audio(self):
         url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html"\
@@ -28,7 +29,6 @@ class VideoBuilder:
         print(url)
         req = requests.get(url)
         soup = BeautifulSoup(req.content, "html.parser")
-        print(soup)
         src = None
         for m in soup.findAll('audio'):
             src = m.get("src", None)
@@ -46,8 +46,8 @@ class VideoBuilder:
         print("downloading {} videos".format(n))
         pexel = Pexels('563492ad6f917000010000016686df7bb84c4d249e89acbc3d0adcd4')
         search_videos = pexel.search_videos(query='church', orientation='landscape',
-                                            size='small', color='', locale='', page=1,
-                                            per_page=n)
+                                            locale='it-IT', size='small', color='',
+                                            page=1, per_page=n)
         ids = {}
         for v in search_videos['videos']:
             file = [x for x in v["video_files"] if x["quality"] == "sd"][0]
@@ -60,6 +60,10 @@ class VideoBuilder:
             with open("{}/{}.mp4".format(self.folder, id), 'wb') as outfile:
                 outfile.write(r.content)
                 print("saved video {}".format(id))
+
+                metadata["duration"] = \
+                    mp.VideoFileClip("{}/{}.mp4".format(self.folder, id)).duration
+
                 ids[id] = metadata
         return ids
 
@@ -74,31 +78,43 @@ class VideoBuilder:
         os.remove("{}/{}.mp4".format(self.folder, id))
 
     def create_final_video(self):
-        clips = [VideoFileClip(f) for f in glob.glob("{}/*.mp4".format(self.folder))]
-        concatenated = concatenate_videoclips(clips, method="compose")
+        existing_clips = [VideoFileClip(f) for f in glob.glob("{}/*.mp4".format(self.folder))]
+
+        clips_to_concatenate = []
+        total_duration = 0
+
+        while total_duration < self.audio_duration:
+            for c in existing_clips:
+                clips_to_concatenate.append(c)
+                total_duration = total_duration + c.duration
+                if total_duration > self.audio_duration:
+                    pass
+
+        concatenated = concatenate_videoclips(clips_to_concatenate, method="compose")
 
         audio = mp.AudioFileClip(self.audio_path)
+
         with_audio = concatenated.set_audio(audio)
         final_clip = with_audio.subclip(0, audio.duration)
 
         final_clip.write_videofile("{}/final_video.mp4".format(self.folder))
 
-    @staticmethod
-    def get_audio_length(file_name):
+    def compute_audio_duration(self, file_name):
         audio = MP3(file_name)
         a = audio.info.length
         print("audio length is {}".format(a))
-        return a
+        self.audio_duration = a
 
     def run(self):
         self.download_audio()
-        audio_length = VideoBuilder.get_audio_length(self.audio_path)
 
+        self.compute_audio_duration(self.audio_path)
         cut_at_seconds = 10
-        n_videos = int(audio_length / cut_at_seconds) + 1
+
+        n_videos_to_download = int(self.audio_duration / cut_at_seconds) + 1
 
         # download
-        videos_and_metadata = self.download_videos(n_videos)
+        videos_and_metadata = self.download_videos(n_videos_to_download)
 
         # cut length and resize
         for id in videos_and_metadata:
@@ -106,6 +122,23 @@ class VideoBuilder:
 
         self.create_final_video()
 
+    @staticmethod
+    def refresh_video_ids():
+        pexel = Pexels('563492ad6f917000010000016686df7bb84c4d249e89acbc3d0adcd4')
+        v_ids = []
+        for i in range(1, 10):
+            search_videos = pexel.search_videos(query='church', orientation='landscape',
+                                                locale='', size='small', color='',
+                                                page=i, per_page=80)
+            for v in search_videos["videos"]:
+                v_ids.append([v["id"]])
+
+        import csv
+        file = open('videos.csv', 'w+',)
+        with file:
+            write = csv.writer(file)
+            write.writerows(v_ids)
+
 
 if __name__ == '__main__':
-    VideoBuilder(year=2022, month=11, day=1).run()
+    VideoBuilder.refresh_video_ids()
