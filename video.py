@@ -1,15 +1,16 @@
+import datetime
 import glob
+import locale
 import os
 
 import requests as requests
 from pexelsapi.pexels import Pexels
 import moviepy.editor as mp
-from moviepy.video.VideoClip import TextClip
+from moviepy.video.VideoClip import TextClip, ImageClip
 from moviepy.editor import VideoFileClip, concatenate_videoclips, CompositeVideoClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 import random
-
-from audio import AudioDownloader
+from mutagen.mp3 import MP3
 
 
 class VideoDownloader:
@@ -22,6 +23,8 @@ class VideoDownloader:
 
         self.videos = open('videos.csv', 'r').readlines()
         random.shuffle(self.videos)
+
+        self.audio_duration = MP3("{}/vangelo.mp3".format(self.folder)).info.length
 
         self.index = 0
         self.duration = 0
@@ -61,31 +64,9 @@ class VideoDownloader:
         os.remove(tmp_file_name)
         print("video file saved {}".format(file_name))
 
-    # def create_final_video(self):
-    #     existing_clips = [VideoFileClip(f) for f in glob.glob("{}/*.mp4".format(self.folder))]
-    #
-    #     clips_to_concatenate = []
-    #     total_duration = 0
-    #
-    #     while total_duration < self.audio_duration:
-    #         for c in existing_clips:
-    #             clips_to_concatenate.append(c)
-    #             total_duration = total_duration + c.duration
-    #             if total_duration > self.audio_duration:
-    #                 pass
-    #
-    #     concatenated = concatenate_videoclips(clips_to_concatenate, method="compose")
-    #
-    #     audio = mp.AudioFileClip(self.audio_path)
-    #
-    #     with_audio = concatenated.set_audio(audio)
-    #     final_clip = with_audio.subclip(0, audio.duration)
-    #
-    #     final_clip.write_videofile("{}/final_video.mp4".format(self.folder))
-
-    def run(self, audio_duration):
-        while self.duration < audio_duration:
-            print("missing duration: {}".format(audio_duration - self.duration))
+    def run(self):
+        while self.duration < self.audio_duration:
+            print("missing duration: {}".format(self.audio_duration - self.duration))
             try:
                 self.download_video()
             except Exception:
@@ -112,9 +93,22 @@ class VideoDownloader:
 
 class VideoComposer:
 
-    def __init__(self, folder, total_duration):
-        self.folder = folder
+    def __init__(self, year, month, day, total_duration):
+        self.date = datetime.datetime(year=year, month=month, day=day)
+        self.folder = "{}{}{}".format(str(year), str(month).zfill(2), str(day).zfill(2))
         self.total_duration = total_duration
+
+    def preview(self):
+        from PIL import ImageDraw, Image, ImageFont
+
+        img = Image.open('bible.jpeg')
+        final_img = ImageDraw.Draw(img)
+        locale.setlocale(locale.LC_ALL, 'it_IT')
+        w, h = img.size
+        font = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 75)
+        final_img.text((w/2, h/3), "Letture del Giorno\n\n{}".format(self.date.strftime("%d %B %Y")),
+                       fill=(255, 255, 255), align="center", anchor="mm", font=font)
+        img.show()
 
     def run(self):
         clips = [VideoFileClip(f) for f in glob.glob("{}/*.mp4".format(self.folder))]
@@ -123,27 +117,28 @@ class VideoComposer:
 
         audio = mp.AudioFileClip("{}/vangelo.mp3".format(self.folder))
 
-        with_audio = concatenated.set_audio(audio)
-
-        subtitles = SubtitlesClip("{}/vangelo.srt".format(self.folder),
-                                  lambda txt: TextClip(txt, font='Georgia-Regular', fontsize=24, color='white'))
-        with_subtitles = CompositeVideoClip([with_audio, subtitles])
-
-        final_clip = with_subtitles.subclip(0, audio.duration)
+        final_clip = self.add_subs(concatenated.set_audio(audio)).subclip(0, audio.duration)
 
         final_clip.write_videofile("{}/final_video.mp4".format(self.folder))
+
+    def add_subs(self, video_clip):
+        subtitles = SubtitlesClip("{}/vangelo.srt".format(self.folder),
+                                  lambda txt: TextClip(txt,
+                                                       font='Tahoma-bold',
+                                                       method="caption",
+                                                       size=video_clip.size,
+                                                       fontsize=38,
+                                                       color='white')) \
+            .set_pos('center')
+        return CompositeVideoClip([video_clip, subtitles])
 
 
 if __name__ == '__main__':
     # todo youtube uploader
-    # todo verify random sample of videos
+    # vd = VideoDownloader(year=2022, month=11, day=18)
+    # vd.run()
 
-    # ad = AudioDownloader(year=2022, month=11, day=10)
-    # ad.run()
+    v = VideoComposer(year=2022, month=11, day=18, total_duration=221)
+    v.preview()
 
-    # vd = VideoDownloader(year=2022, month=11, day=10)
-    # vd.run(ad.audio_duration)
-
-    v = VideoComposer(folder="20221110", total_duration=221)
-    v.run()
-
+    # v.add_subs(VideoFileClip("20221118/video_2.mp4")).write_videofile("test.mp4")
