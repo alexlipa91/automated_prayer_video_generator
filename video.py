@@ -94,21 +94,33 @@ class VideoDownloader:
 class VideoComposer:
 
     def __init__(self, year, month, day, total_duration):
+        self.year = str(year)
+        self.month = str(month).zfill(2)
+        self.day = str(day).zfill(2)
+
         self.date = datetime.datetime(year=year, month=month, day=day)
-        self.folder = "{}{}{}".format(str(year), str(month).zfill(2), str(day).zfill(2))
+        self.folder = "{}{}{}".format(self.year, self.month, self.day)
         self.total_duration = total_duration
+
+    def get_santo_del_giorno(self):
+        # todo finish
+        s = requests\
+            .get("https://www.santodelgiorno.it/santi.json?data={}-{}-{}".format(self.year, self.month, self.day))\
+            .json()
+        for x in s:
+            print(x["nome"])
 
     def preview(self):
         from PIL import ImageDraw, Image, ImageFont
 
-        img = Image.open('bible.jpeg')
+        img = Image.open('resources/bible.jpeg')
         final_img = ImageDraw.Draw(img)
         locale.setlocale(locale.LC_ALL, 'it_IT')
         w, h = img.size
         font = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 75)
         final_img.text((w/2, h/3), "Letture del Giorno\n\n{}".format(self.date.strftime("%d %B %Y")),
                        fill=(255, 255, 255), align="center", anchor="mm", font=font)
-        img.show()
+        img.save("{}/preview.jpeg".format(self.folder))
 
     def run(self):
         clips = [VideoFileClip(f) for f in glob.glob("{}/*.mp4".format(self.folder))]
@@ -139,6 +151,6 @@ if __name__ == '__main__':
     # vd.run()
 
     v = VideoComposer(year=2022, month=11, day=18, total_duration=221)
-    v.preview()
+    v.get_santo_del_giorno()
 
     # v.add_subs(VideoFileClip("20221118/video_2.mp4")).write_videofile("test.mp4")
