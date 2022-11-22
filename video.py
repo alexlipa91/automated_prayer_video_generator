@@ -34,7 +34,7 @@ class VideoDownloader:
         except FileExistsError:
             pass
 
-    def download_video(self, cut_at_seconds=10):
+    def download_video(self, cut_at_seconds=15):
         print("downloading video {}".format(self.index))
         url = self.videos[self.index]
         print("url {}".format(url))
