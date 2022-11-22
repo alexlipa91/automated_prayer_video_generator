@@ -82,7 +82,7 @@ class AudioDownloader:
             "enable_word_time_offsets": True,
             "enable_automatic_punctuation": True
         }
-        audio = {"uri": "gs://{}/{}".format("nutmeg-9099c.appspot.com", self.wav_gcs_path)}
+        audio = {"uri": "gs://{}/{}".format("praryers-channel-video-data", self.wav_gcs_path)}
 
         operation = client.long_running_recognize(config=config,
                                                   audio=speech_v1.RecognitionAudio(audio))
