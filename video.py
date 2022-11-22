@@ -21,7 +21,7 @@ class VideoDownloader:
         self.day = str(day).zfill(2)
         self.folder = "{}{}{}".format(self.year, self.month, self.day)
 
-        self.videos = open('videos.csv', 'r').readlines()
+        self.videos = open('resources/videos.csv', 'r').readlines()
         random.shuffle(self.videos)
 
         self.audio_duration = MP3("{}/vangelo.mp3".format(self.folder)).info.length
@@ -85,7 +85,7 @@ class VideoDownloader:
                 v_ids.append([file["link"]])
 
         import csv
-        file = open('videos.csv', 'w+',)
+        file = open('resources/videos.csv', 'w+', )
         with file:
             write = csv.writer(file)
             write.writerows(v_ids)
