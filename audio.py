@@ -1,3 +1,5 @@
+import os
+
 import requests as requests
 import srt as srt
 from google.cloud import storage
@@ -130,8 +132,15 @@ class AudioDownloader:
         f.close()
 
     def run(self):
+        flag = "{}/audio_downloader_done".format(self.config.folder)
+        if os.path.exists(flag):
+            print("audio download done...skipping")
+            return
+
         self.download_audio()
         self.generate_wav()
         self.upload_wav_to_gcs_blob()
         self.call_gts_api()
         self.generate_subs()
+
+        open(flag, 'x')

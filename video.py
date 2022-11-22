@@ -62,12 +62,19 @@ class VideoDownloader:
         print("video file saved {}".format(file_name))
 
     def run(self):
+        flag = "{}/video_downloader_done".format(self.config.folder)
+        if os.path.exists(flag):
+            print("audio download done...skipping")
+            return
+
         while self.duration < self.audio_duration:
             print("missing duration: {}".format(self.audio_duration - self.duration))
             try:
                 self.download_video()
             except Exception:
                 print("failed")
+
+        open(flag, 'x')
 
     @staticmethod
     def refresh_video_ids():
@@ -118,6 +125,11 @@ class VideoComposer:
         img.save("{}/preview.jpeg".format(self.config.folder))
 
     def run(self):
+        flag = "{}/video_composer_done".format(self.config.folder)
+        if os.path.exists(flag):
+            print("audio download done...skipping")
+            return
+
         clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(self.config.folder))]
 
         concatenated = concatenate_videoclips(clips, method="compose")
@@ -129,6 +141,8 @@ class VideoComposer:
             .subclip(0, audio.duration)
 
         final_clip.write_videofile("{}/final_video.mp4".format(self.config.folder))
+
+        open(flag, "x")
 
     def add_subs(self, video_clip):
         subtitles = SubtitlesClip("{}/vangelo.srt".format(self.config.folder),
