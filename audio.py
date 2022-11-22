@@ -1,5 +1,3 @@
-import os
-
 import requests as requests
 import srt as srt
 from google.cloud import storage
@@ -11,17 +9,11 @@ from pydub.utils import mediainfo
 
 class AudioDownloader:
 
-    def __init__(self, year, month, day):
-        self.year = str(year)
-        self.month = str(month).zfill(2)
-        self.day = str(day).zfill(2)
-        self.folder = "{}{}{}".format(self.year, self.month, self.day)
+    def __init__(self, config):
+        self.config = config
+
         self.source_url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html" \
-            .format(self.year, self.month, self.day)
-        try:
-            os.mkdir(self.folder)
-        except FileExistsError:
-            pass
+            .format(config.year, config.month, config.day)
         self.mp3_path = "{}/vangelo.mp3".format(self.folder)
         self.wav_path = "{}/vangelo.wav".format(self.folder)
         self.wav_gcs_path = "tmp/{}".format(self.wav_path)
@@ -29,9 +21,7 @@ class AudioDownloader:
 
     def download_audio(self):
         print("downloading audio")
-        url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html"\
-            .format(self.year, self.month, self.day)
-        req = requests.get(url)
+        req = requests.get(self.source_url)
         soup = BeautifulSoup(req.content, "html.parser")
         src = None
         for m in soup.findAll('audio'):
@@ -145,27 +135,3 @@ class AudioDownloader:
         self.upload_wav_to_gcs_blob()
         self.call_gts_api()
         self.generate_subs()
-
-
-def run(request):
-    request_json = request.get_json(silent=True)
-    print("args {}, data {}".format(request.args, request_json))
-
-    request_data = request_json["data"]
-    AudioDownloader(request_data["year"], request_data["month"], request_data["day"]).run()
-
-    return {}, 200
-
-
-"""
-gcloud functions deploy audio_downloader \
-                         --runtime python38 \
-                         --entry-point run \
-                         --trigger-http \
-                         --region europe-central2
-"""
-
-
-if __name__ == '__main__':
-    ad = AudioDownloader(year=2022, month=11, day=18)
-    ad.run()

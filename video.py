@@ -15,22 +15,19 @@ from mutagen.mp3 import MP3
 
 class VideoDownloader:
 
-    def __init__(self, year, month, day):
-        self.year = str(year)
-        self.month = str(month).zfill(2)
-        self.day = str(day).zfill(2)
-        self.folder = "{}{}{}".format(self.year, self.month, self.day)
+    def __init__(self, config):
+        self.config = config
 
         self.videos = open('resources/videos.csv', 'r').readlines()
         random.shuffle(self.videos)
 
-        self.audio_duration = MP3("{}/vangelo.mp3".format(self.folder)).info.length
+        self.audio_duration = MP3("{}/vangelo.mp3".format(config.folder)).info.length
 
         self.index = 0
         self.duration = 0
 
         try:
-            os.mkdir(self.folder)
+            os.mkdir(config.folder)
         except FileExistsError:
             pass
 
@@ -40,7 +37,7 @@ class VideoDownloader:
         print("url {}".format(url))
         r = requests.get(url)
 
-        file_name = "{}/video_{}.mp4".format(self.folder, self.index)
+        file_name = "{}/video_{}.mp4".format(self.config.folder, self.index)
         tmp_file_name = file_name + ".tmp"
 
         with open(tmp_file_name, 'wb') as outfile:
@@ -93,14 +90,8 @@ class VideoDownloader:
 
 class VideoComposer:
 
-    def __init__(self, year, month, day):
-        self.year = str(year)
-        self.month = str(month).zfill(2)
-        self.day = str(day).zfill(2)
-
-        self.date = datetime.datetime(year=year, month=month, day=day)
-        self.folder = "{}{}{}".format(self.year, self.month, self.day)
-
+    def __init__(self, config):
+        self.config = config
         self.total_duration = MP3("{}/vangelo.mp3".format(self.folder)).info.length
 
     def get_santo_del_giorno(self):
@@ -119,25 +110,28 @@ class VideoComposer:
         locale.setlocale(locale.LC_ALL, 'it_IT')
         w, h = img.size
         font = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 195)
-        final_img.text((w/2, h/3), "Letture del Giorno\n\n\n\n{}".format(self.date.strftime("%d %B %Y")),
+
+        date = datetime.datetime(year=int(self.config.year), month=int(self.config.month), day=int(self.config.day))
+
+        final_img.text((w/2, h/3), "Letture del Giorno\n\n\n\n{}".format(date.strftime("%d %B %Y")),
                        fill=(255, 255, 255), align="center", anchor="ms", font=font)
-        img.save("{}/preview.jpeg".format(self.folder))
+        img.save("{}/preview.jpeg".format(self.config.folder))
 
     def run(self):
-        clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(self.folder))]
+        clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(self.config.folder))]
 
         concatenated = concatenate_videoclips(clips, method="compose")
 
-        audio = mp.AudioFileClip("{}/vangelo.mp3".format(self.folder))
+        audio = mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))
 
         final_clip = self\
             .add_subs(concatenated.set_audio(audio))\
             .subclip(0, audio.duration)
 
-        final_clip.write_videofile("{}/final_video.mp4".format(self.folder))
+        final_clip.write_videofile("{}/final_video.mp4".format(self.config.folder))
 
     def add_subs(self, video_clip):
-        subtitles = SubtitlesClip("{}/vangelo.srt".format(self.folder),
+        subtitles = SubtitlesClip("{}/vangelo.srt".format(self.config.folder),
                                   lambda txt: TextClip(txt,
                                                        font='Tahoma-bold',
                                                        method="caption",
@@ -150,15 +144,3 @@ class VideoComposer:
             .set_pos('center')
         return CompositeVideoClip([video_clip, subtitles])
 
-
-if __name__ == '__main__':
-    # todo youtube uploader
-    # vd = VideoDownloader(year=2022, month=11, day=18)
-    # vd.run()
-
-    v = VideoComposer(year=2022, month=11, day=18, total_duration=221)
-    # v.get_santo_del_giorno()
-    # v.preview()
-    v.run()
-
-    # v.add_subs(VideoFileClip("20221118/video_2.mp4")).write_videofile("test.mp4")
