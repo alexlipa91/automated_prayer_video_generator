@@ -99,7 +99,7 @@ class VideoComposer:
 
     def __init__(self, config):
         self.config = config
-        self.total_duration = MP3("{}/vangelo.mp3".format(self.folder)).info.length
+        self.total_duration = MP3("{}/vangelo.mp3".format(config.folder)).info.length
 
     def get_santo_del_giorno(self):
         # todo finish
