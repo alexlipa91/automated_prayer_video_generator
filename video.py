@@ -6,7 +6,7 @@ import os
 import requests as requests
 from pexelsapi.pexels import Pexels
 import moviepy.editor as mp
-from moviepy.video.VideoClip import TextClip, ImageClip
+from moviepy.video.VideoClip import TextClip
 from moviepy.editor import VideoFileClip, concatenate_videoclips, CompositeVideoClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 import random
@@ -93,14 +93,15 @@ class VideoDownloader:
 
 class VideoComposer:
 
-    def __init__(self, year, month, day, total_duration):
+    def __init__(self, year, month, day):
         self.year = str(year)
         self.month = str(month).zfill(2)
         self.day = str(day).zfill(2)
 
         self.date = datetime.datetime(year=year, month=month, day=day)
         self.folder = "{}{}{}".format(self.year, self.month, self.day)
-        self.total_duration = total_duration
+
+        self.total_duration = MP3("{}/vangelo.mp3".format(self.folder)).info.length
 
     def get_santo_del_giorno(self):
         # todo finish
@@ -117,19 +118,21 @@ class VideoComposer:
         final_img = ImageDraw.Draw(img)
         locale.setlocale(locale.LC_ALL, 'it_IT')
         w, h = img.size
-        font = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 75)
-        final_img.text((w/2, h/3), "Letture del Giorno\n\n{}".format(self.date.strftime("%d %B %Y")),
-                       fill=(255, 255, 255), align="center", anchor="mm", font=font)
+        font = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 195)
+        final_img.text((w/2, h/3), "Letture del Giorno\n\n\n\n{}".format(self.date.strftime("%d %B %Y")),
+                       fill=(255, 255, 255), align="center", anchor="ms", font=font)
         img.save("{}/preview.jpeg".format(self.folder))
 
     def run(self):
-        clips = [VideoFileClip(f) for f in glob.glob("{}/*.mp4".format(self.folder))]
+        clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(self.folder))]
 
         concatenated = concatenate_videoclips(clips, method="compose")
 
         audio = mp.AudioFileClip("{}/vangelo.mp3".format(self.folder))
 
-        final_clip = self.add_subs(concatenated.set_audio(audio)).subclip(0, audio.duration)
+        final_clip = self\
+            .add_subs(concatenated.set_audio(audio))\
+            .subclip(0, audio.duration)
 
         final_clip.write_videofile("{}/final_video.mp4".format(self.folder))
 
@@ -139,7 +142,10 @@ class VideoComposer:
                                                        font='Tahoma-bold',
                                                        method="caption",
                                                        size=video_clip.size,
-                                                       fontsize=38,
+                                                       fontsize=48,
+                                                       stroke_color="black",
+                                                       stroke_width=2,
+                                                       # transparent=False,
                                                        color='white')) \
             .set_pos('center')
         return CompositeVideoClip([video_clip, subtitles])
@@ -151,6 +157,8 @@ if __name__ == '__main__':
     # vd.run()
 
     v = VideoComposer(year=2022, month=11, day=18, total_duration=221)
-    v.get_santo_del_giorno()
+    # v.get_santo_del_giorno()
+    # v.preview()
+    v.run()
 
     # v.add_subs(VideoFileClip("20221118/video_2.mp4")).write_videofile("test.mp4")
