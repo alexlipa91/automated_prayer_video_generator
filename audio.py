@@ -62,7 +62,7 @@ class AudioDownloader:
 
     def upload_wav_to_gcs_blob(self):
         storage_client = storage.Client()
-        bucket = storage_client.bucket("nutmeg-9099c.appspot.com")
+        bucket = storage_client.bucket("praryers-channel-video-data")
         blob = bucket.blob(self.wav_gcs_path)
 
         blob.upload_from_filename(self.wav_path)
