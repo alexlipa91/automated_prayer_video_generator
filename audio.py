@@ -4,7 +4,6 @@ import requests as requests
 import srt as srt
 from google.cloud import storage
 from google.cloud import speech_v1
-from mutagen.mp3 import MP3
 from bs4 import BeautifulSoup
 from pydub import AudioSegment
 from pydub.utils import mediainfo
@@ -26,7 +25,6 @@ class AudioDownloader:
         self.mp3_path = "{}/vangelo.mp3".format(self.folder)
         self.wav_path = "{}/vangelo.wav".format(self.folder)
         self.wav_gcs_path = "tmp/{}".format(self.wav_path)
-        self.audio_duration = 0
         self.transcript_path = "{}/vangelo_transcript.txt".format(self.folder)
 
     def download_audio(self):
@@ -47,7 +45,6 @@ class AudioDownloader:
         with open(self.mp3_path, 'wb') as f:
             f.write(doc.content)
 
-        self.audio_duration = MP3(self.mp3_path).info.length
         print("audio file saved {}".format(self.mp3_path))
 
     @staticmethod
@@ -148,6 +145,25 @@ class AudioDownloader:
         self.upload_wav_to_gcs_blob()
         self.call_gts_api()
         self.generate_subs()
+
+
+def run(request):
+    request_json = request.get_json(silent=True)
+    print("args {}, data {}".format(request.args, request_json))
+
+    request_data = request_json["data"]
+    AudioDownloader(request_data["year"], request_data["month"], request_data["day"]).run()
+
+    return {}, 200
+
+
+"""
+gcloud functions deploy audio_downloader \
+                         --runtime python38 \
+                         --entry-point run \
+                         --trigger-http \
+                         --region europe-central2
+"""
 
 
 if __name__ == '__main__':
