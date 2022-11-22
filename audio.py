@@ -16,10 +16,9 @@ class AudioDownloader:
 
         self.source_url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html" \
             .format(config.year, config.month, config.day)
-        self.mp3_path = "{}/vangelo.mp3".format(self.folder)
-        self.wav_path = "{}/vangelo.wav".format(self.folder)
+        self.mp3_path = "{}/vangelo.mp3".format(config.folder)
+        self.wav_path = "{}/vangelo.wav".format(config.folder)
         self.wav_gcs_path = "tmp/{}".format(self.wav_path)
-        self.transcript_path = "{}/vangelo_transcript.txt".format(self.folder)
 
     def download_audio(self):
         print("downloading audio")
