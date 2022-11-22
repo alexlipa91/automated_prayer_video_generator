@@ -64,7 +64,7 @@ class VideoDownloader:
     def run(self):
         flag = "{}/video_downloader_done".format(self.config.folder)
         if os.path.exists(flag):
-            print("audio download done...skipping")
+            print("video downloader done...skipping")
             return
 
         while self.duration < self.audio_duration:
@@ -127,7 +127,7 @@ class VideoComposer:
     def run(self):
         flag = "{}/video_composer_done".format(self.config.folder)
         if os.path.exists(flag):
-            print("audio download done...skipping")
+            print("video composer done...skipping")
             return
 
         clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(self.config.folder))]
