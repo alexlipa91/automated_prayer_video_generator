@@ -46,7 +46,7 @@ RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 #   https://developers.google.com/youtube/v3/guides/authentication
 # For more information about the client_secrets.json file format, see:
 #   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-CLIENT_SECRETS_FILE = 'client_secret.json'
+CLIENT_SECRETS_FILE = '../client_secret.json'
 
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
@@ -164,17 +164,14 @@ def set_thumbnail(youtube, video_id, thumbnail_file):
     print(response)
 
 
-def upload(year, month, day):
-    year_str = str(year)
-    month_str = str(month).zfill(2)
-    day_str = str(day).zfill(2)
-    folder = "{}{}{}".format(year_str, month_str, day_str)
-
-    date_string = datetime.datetime(year=year, month=month, day=day).strftime("%d %B %Y")
-    file = "{}/final_video.mp4".format(folder)
+def upload(config):
+    date_string = datetime.datetime(year=int(config.year),
+                                    month=int(config.month),
+                                    day=int(config.day)).strftime("%d %B %Y")
+    file = "{}/final_video.mp4".format(config.folder)
     source_url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html"\
-        .format(year_str, month_str, day_str)
-    thumbnail = "{}/preview.jpeg".format(folder)
+        .format(config.year, config.month, config.day)
+    thumbnail = "{}/preview.jpeg".format(config.folder)
     title = "Vangelo del Giorno: {}".format(date_string)
     description = "Vangelo e letture del giorno, con commento del Santo Padre\n\nOfferto da: {}".format(source_url)
     category = "22"
@@ -183,4 +180,4 @@ def upload(year, month, day):
 
     youtube = get_authenticated_service()
     video_id = initialize_upload(youtube, file, thumbnail, title, description, category, tags, privacy_status)
-    set_thumbnail(youtube, video_id, "{}/preview.jpeg".format(folder))
+    set_thumbnail(youtube, video_id, "{}/preview.jpeg".format(config.folder))

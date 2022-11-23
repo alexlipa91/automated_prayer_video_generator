@@ -18,7 +18,7 @@ class VideoDownloader:
     def __init__(self, config):
         self.config = config
 
-        self.videos = open('resources/videos.csv', 'r').readlines()
+        self.videos = open('../resources/videos.csv', 'r').readlines()
         random.shuffle(self.videos)
 
         self.audio_duration = MP3("{}/vangelo.mp3".format(config.folder)).info.length
@@ -89,7 +89,7 @@ class VideoDownloader:
                 v_ids.append([file["link"]])
 
         import csv
-        file = open('resources/videos.csv', 'w+', )
+        file = open('../resources/videos.csv', 'w+', )
         with file:
             write = csv.writer(file)
             write.writerows(v_ids)
@@ -112,7 +112,7 @@ class VideoComposer:
     def preview(self):
         from PIL import ImageDraw, Image, ImageFont
 
-        img = Image.open('resources/bible.jpeg')
+        img = Image.open('../resources/bible.jpeg')
         final_img = ImageDraw.Draw(img)
         locale.setlocale(locale.LC_ALL, 'it_IT')
         w, h = img.size
