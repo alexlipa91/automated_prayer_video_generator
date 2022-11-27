@@ -4,27 +4,20 @@ import time
 
 import uploader
 from audio import AudioDownloader
+from config import Config
 from video import VideoDownloader, VideoComposer
-
-
-class Config:
-
-    def __init__(self, param):
-        param_tokens = param.split("-")
-        self.year = str(param_tokens[0]).zfill(2)
-        self.month = str(param_tokens[1]).zfill(2)
-        self.day = str(param_tokens[2]).zfill(2)
-        self.folder = "{}{}{}".format(self.year, self.month, self.day)
-        try:
-            os.mkdir(self.folder)
-        except FileExistsError:
-            pass
+from datetime import datetime
 
 
 if __name__ == '__main__':
     start = time.time()
 
-    config = Config(sys.argv[1])
+    date_param = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("DATE", None)
+
+    if not date_param:
+        date_param = datetime.now().strftime("%Y-%m-%d")
+
+    config = Config(date_param)
 
     ad = AudioDownloader(config)
     ad.run()
@@ -34,6 +27,7 @@ if __name__ == '__main__':
 
     vc = VideoComposer(config)
     vc.run()
+    vc.generate_preview()
 
     uploader.upload(config)
 

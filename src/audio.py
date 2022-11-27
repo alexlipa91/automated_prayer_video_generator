@@ -7,6 +7,7 @@ from google.cloud import speech_v1
 from bs4 import BeautifulSoup
 from pydub import AudioSegment
 from pydub.utils import mediainfo
+from config import Config
 
 
 class AudioDownloader:
@@ -124,7 +125,7 @@ class AudioDownloader:
         self.write_srt(subs)
 
     def write_srt(self, subs):
-        srt_file = "{}/vangelo.srt".format(self.folder)
+        srt_file = "{}/vangelo.srt".format(self.config.folder)
         print("Writing subtitles to {}".format(srt_file))
         f = open(srt_file, 'w')
         f.writelines(srt.compose(subs))
@@ -139,7 +140,14 @@ class AudioDownloader:
         self.download_audio()
         self.generate_wav()
         self.upload_wav_to_gcs_blob()
-        self.call_gts_api()
-        self.generate_subs()
+
+        if not os.environ["SKIP_SUBS"]:
+            self.call_gts_api()
+            self.generate_subs()
 
         open(flag, 'x')
+
+
+if __name__ == '__main__':
+    ad = AudioDownloader(config=Config(param="2022-12-1"))
+    ad.run()

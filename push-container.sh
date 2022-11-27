@@ -1,0 +1,1 @@
+docker push europe-west4-docker.pkg.dev/prayers-channel-369405/images/prayer-channel-video-builder:latest

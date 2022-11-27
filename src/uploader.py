@@ -6,6 +6,7 @@
 # https://github.com/youtube/api-samples/blob/master/python/upload_video.py
 
 import datetime
+import os
 from http import client
 import httplib2
 import random
@@ -66,11 +67,11 @@ def generate_credentials_file():
 
 
 # Authorize the request and store authorization credentials.
-def get_authenticated_service(credentials_file="credentials.storage"):
-    flow = InstalledAppFlow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, SCOPES
-    )
-    credentials = Credentials.from_authorized_user_file(credentials_file)
+def get_authenticated_service():
+    # flow = InstalledAppFlow.from_client_secrets_file(
+    #     CLIENT_SECRETS_FILE, SCOPES
+    # )
+    credentials = Credentials.from_authorized_user_file(os.environ["CREDENTIALS_FILE"])
     # credentials = flow.run_local_server(port=8080)
     return build(API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
@@ -164,6 +165,23 @@ def set_thumbnail(youtube, video_id, thumbnail_file):
     print(response)
 
 
+def add_to_playlist(youtube, video_id):
+    add_video_request = youtube.playlistItem().insert(
+        part="snippet",
+        body={
+            'snippet': {
+                'playlistId': "PLYFkvAawma-XL1-y8nZU3tLf9WTKnI11m",
+                'resourceId': {
+                    'kind': 'youtube#video',
+                    'videoId': video_id
+                }
+            }
+        }
+    )
+    response = add_video_request.execute()
+    print(response)
+
+
 def upload(config):
     date_string = datetime.datetime(year=int(config.year),
                                     month=int(config.month),
@@ -175,9 +193,10 @@ def upload(config):
     title = "Vangelo del Giorno: {}".format(date_string)
     description = "Vangelo e letture del giorno, con commento del Santo Padre\n\nOfferto da: {}".format(source_url)
     category = "22"
-    tags = ["vangelo", "bibbia", "vaticano", "papa"]
+    tags = ["vangelo", "preghiere", "chiesa", "gesù", "bibbia", "vaticano", "papa"]
     privacy_status = "public"
 
     youtube = get_authenticated_service()
     video_id = initialize_upload(youtube, file, thumbnail, title, description, category, tags, privacy_status)
     set_thumbnail(youtube, video_id, "{}/preview.jpeg".format(config.folder))
+    add_to_playlist(youtube, video_id)

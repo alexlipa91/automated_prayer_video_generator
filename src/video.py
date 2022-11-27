@@ -1,6 +1,5 @@
 import datetime
 import glob
-import locale
 import os
 
 import requests as requests
@@ -18,7 +17,7 @@ class VideoDownloader:
     def __init__(self, config):
         self.config = config
 
-        self.videos = open('../resources/videos.csv', 'r').readlines()
+        self.videos = open('resources/videos.csv', 'r').readlines()
         random.shuffle(self.videos)
 
         self.audio_duration = MP3("{}/vangelo.mp3".format(config.folder)).info.length
@@ -56,7 +55,7 @@ class VideoDownloader:
         # resize
         resized_video = cut_video.resize(width=960, height=540)
 
-        resized_video.write_videofile(file_name)
+        resized_video.write_videofile(file_name, verbose=False, logger=None)
 
         os.remove(tmp_file_name)
         print("video file saved {}".format(file_name))
@@ -109,20 +108,36 @@ class VideoComposer:
         for x in s:
             print(x["nome"])
 
-    def preview(self):
+    def generate_preview(self):
         from PIL import ImageDraw, Image, ImageFont
 
         img = Image.open('../resources/bible.jpeg')
         final_img = ImageDraw.Draw(img)
-        locale.setlocale(locale.LC_ALL, 'it_IT')
         w, h = img.size
         font = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 195)
 
         date = datetime.datetime(year=int(self.config.year), month=int(self.config.month), day=int(self.config.day))
 
-        final_img.text((w/2, h/3), "Letture del Giorno\n\n\n\n{}".format(date.strftime("%d %B %Y")),
+        final_img.text((w/2, h/3), "Letture del Giorno\n\n\n\n{}".format(self.get_date_string(date)),
                        fill=(255, 255, 255), align="center", anchor="ms", font=font)
         img.save("{}/preview.jpeg".format(self.config.folder))
+
+    def get_date_string(self, date):
+        months = {
+            1: "Gennaio",
+            2: "Febbraio",
+            3: "Marzo",
+            4: "Aprile",
+            5: "Maggio",
+            6: "Giugno",
+            7: "Luglio",
+            8: "Agosto",
+            9: "Settembre",
+            10: "Ottobre",
+            11: "Novembre",
+            12: "Dicembre"
+        }
+        return "{} {} {}".format(date.day, months[date.month], date.year)
 
     def run(self):
         flag = "{}/video_composer_done".format(self.config.folder)
@@ -136,11 +151,17 @@ class VideoComposer:
 
         audio = mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))
 
-        final_clip = self\
-            .add_subs(concatenated.set_audio(audio))\
-            .subclip(0, audio.duration)
+        with_audio = concatenated.set_audio(audio)
 
-        final_clip.write_videofile("{}/final_video.mp4".format(self.config.folder))
+        if not os.environ["SKIP_SUBS"]:
+            final_clip = self.add_subs(with_audio)
+        else:
+            final_clip = with_audio
+
+        final_clip\
+            .subclip(0, audio.duration)\
+            .write_videofile("{}/final_video.mp4".format(self.config.folder),
+                             verbose=False, logger=None)
 
         open(flag, "x")
 
