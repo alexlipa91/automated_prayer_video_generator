@@ -47,11 +47,11 @@ RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 #   https://developers.google.com/youtube/v3/guides/authentication
 # For more information about the client_secrets.json file format, see:
 #   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-CLIENT_SECRETS_FILE = '../client_secret.json'
+CLIENT_SECRETS_FILE = 'client_secret.json'
 
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
-SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
+SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube']
 API_SERVICE_NAME = 'youtube'
 API_VERSION = 'v3'
 
@@ -63,7 +63,8 @@ def generate_credentials_file():
         CLIENT_SECRETS_FILE, SCOPES
     )
     credentials = flow.run_local_server(port=8080)
-    # save to "credentials.storage"
+    with open("credentials.storage", "w") as outfile:
+        outfile.write(credentials.to_json())
 
 
 # Authorize the request and store authorization credentials.
@@ -166,7 +167,7 @@ def set_thumbnail(youtube, video_id, thumbnail_file):
 
 
 def add_to_playlist(youtube, video_id):
-    add_video_request = youtube.playlistItem().insert(
+    add_video_request = youtube.playlistItems().insert(
         part="snippet",
         body={
             'snippet': {
@@ -200,3 +201,22 @@ def upload(config):
     video_id = initialize_upload(youtube, file, thumbnail, title, description, category, tags, privacy_status)
     set_thumbnail(youtube, video_id, "{}/preview.jpeg".format(config.folder))
     add_to_playlist(youtube, video_id)
+
+
+# if __name__ == '__main__':
+#     os.environ["CREDENTIALS_FILE"] = "credentials.storage"
+#
+#     y = get_authenticated_service()
+#
+#     print(dir(y.captions().update(
+#         part="id",
+#         body=dict(
+#             snippet=dict(
+#                 videoId="wGQK4G5ccuI",
+#                 language="it",
+#                 name="test-caption",
+#                 isDraft=False
+#             )
+#         ),
+#         media_body=MediaFileUpload("")
+#     )))

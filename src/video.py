@@ -1,15 +1,13 @@
 import datetime
 import glob
-import os
 
 import requests as requests
 from pexelsapi.pexels import Pexels
 import moviepy.editor as mp
-from moviepy.video.VideoClip import TextClip
-from moviepy.editor import VideoFileClip, concatenate_videoclips, CompositeVideoClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 import random
 from mutagen.mp3 import MP3
+from moviepy.editor import *
 
 
 class VideoDownloader:
@@ -111,15 +109,19 @@ class VideoComposer:
     def generate_preview(self):
         from PIL import ImageDraw, Image, ImageFont
 
-        img = Image.open('../resources/bible.jpeg')
+        img = Image.open('resources/bible.jpeg')
         final_img = ImageDraw.Draw(img)
         w, h = img.size
-        font = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 195)
+        font_main = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 160)
+        font_small = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 110)
 
         date = datetime.datetime(year=int(self.config.year), month=int(self.config.month), day=int(self.config.day))
 
-        final_img.text((w/2, h/3), "Letture del Giorno\n\n\n\n{}".format(self.get_date_string(date)),
-                       fill=(255, 255, 255), align="center", anchor="ms", font=font)
+        final_img.text((w/2, h/4), "Letture del Giorno\n\n\n\n\n\n{}".format(self.get_date_string(date)),
+                       fill=(255, 255, 255), align="center", anchor="ms", font=font_main)
+        final_img.text((w/2, h/2.5), "con commento del Santo Padre",
+                       fill=(255, 255, 255), align="center", anchor="ms", font=font_small)
+        img.show()
         img.save("{}/preview.jpeg".format(self.config.folder))
 
     def get_date_string(self, date):
@@ -138,6 +140,14 @@ class VideoComposer:
             12: "Dicembre"
         }
         return "{} {} {}".format(date.day, months[date.month], date.year)
+
+    def dummy_video(self):
+        img = ['resources/bible.jpeg']
+        audio = mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))
+        clips = [ImageClip(m).set_duration(audio.duration) for m in img]
+        concat_clip = concatenate_videoclips(clips, method="compose")
+        with_audio = concat_clip.set_audio(audio)
+        with_audio.write_videofile("{}/dummy.mp4".format(self.config.folder), fps=26)
 
     def run(self):
         flag = "{}/video_composer_done".format(self.config.folder)
@@ -179,3 +189,8 @@ class VideoComposer:
             .set_pos('center')
         return CompositeVideoClip([video_clip, subtitles])
 
+
+if __name__ == '__main__':
+    from config import Config
+    vc = VideoComposer(config=Config("2022-11-18"))
+    vc.generate_preview()

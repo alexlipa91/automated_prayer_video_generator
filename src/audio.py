@@ -147,7 +147,25 @@ class AudioDownloader:
 
         open(flag, 'x')
 
+    def download_transcript(self):
+        print("downloading transcript")
+        req = requests.get(self.source_url)
+        soup = BeautifulSoup(req.content, "html.parser")
+
+        final_text = ""
+
+        content = soup.findAll('div', attrs={"class": "section__content"})
+        for x in content:
+            last_p = x.findAll("p")[-1]
+            final_text = final_text + last_p.getText()
+
+        splitted = final_text.split()
+        final_text_in_lines = [' '.join(splitted[i: i + 10]) for i in range(0, len(splitted), 10)]
+
+        with open("{}/transcript.txt".format(self.config.folder), "w") as text_file:
+            text_file.write('\n'.join(final_text_in_lines))
+
 
 if __name__ == '__main__':
-    ad = AudioDownloader(config=Config(param="2022-12-1"))
-    ad.run()
+    ad = AudioDownloader(config=Config(param="2022-11-28"))
+    ad.download_audio()
