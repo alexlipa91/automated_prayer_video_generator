@@ -96,7 +96,6 @@ class VideoComposer:
 
     def __init__(self, config):
         self.config = config
-        self.total_duration = MP3("{}/vangelo.mp3".format(config.folder)).info.length
 
     def get_santo_del_giorno(self):
         # todo finish
@@ -106,7 +105,7 @@ class VideoComposer:
         for x in s:
             print(x["nome"])
 
-    def generate_preview(self):
+    def generate_preview_bible(self):
         from PIL import ImageDraw, Image, ImageFont
 
         img = Image.open('resources/bible.jpeg')
@@ -121,6 +120,28 @@ class VideoComposer:
                        fill=(255, 255, 255), align="center", anchor="ms", font=font_main)
         final_img.text((w/2, h/2.5), "con commento del Santo Padre",
                        fill=(255, 255, 255), align="center", anchor="ms", font=font_small)
+        img.show()
+        img.save("{}/preview.jpeg".format(self.config.folder))
+
+    def generate_preview_pope(self):
+        from PIL import ImageDraw, Image, ImageFont
+
+        img = Image.open('resources/pope.jpeg')
+        final_img = ImageDraw.Draw(img)
+        w, h = img.size
+        font_main = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 100)
+        font_small = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 40)
+
+        date = datetime.datetime(year=int(self.config.year), month=int(self.config.month), day=int(self.config.day))
+
+        final_img.text((w/3, h/4), "Letture del\nGiorno",
+                       fill=(255, 255, 255), align="center", anchor="ms", font=font_main)
+        final_img.text((w/3, h/1.61), "con commento del\nSanto Padre",
+                       fill=(255, 255, 255), align="center", anchor="ms", font=font_small)
+        final_img.text((w/3, h/1.16), "{}".format(self.get_date_string(date)),
+                       fill=(255, 255, 255), align="center", anchor="ms",
+                       font=ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 70))
+
         img.show()
         img.save("{}/preview.jpeg".format(self.config.folder))
 
@@ -150,11 +171,6 @@ class VideoComposer:
         with_audio.write_videofile("{}/dummy.mp4".format(self.config.folder), fps=26)
 
     def run(self):
-        flag = "{}/video_composer_done".format(self.config.folder)
-        if os.path.exists(flag):
-            print("video composer done...skipping")
-            return
-
         clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(self.config.folder))]
 
         concatenated = concatenate_videoclips(clips, method="compose")
@@ -163,17 +179,18 @@ class VideoComposer:
 
         with_audio = concatenated.set_audio(audio)
 
-        if not os.environ["SKIP_SUBS"]:
-            final_clip = self.add_subs(with_audio)
-        else:
-            final_clip = with_audio
+        # text_clip = TextClip("Iscriviti per un nuovo video ogni giorno", font="Arial", fontsize=24, color='black') \
+        #     .set_position((20, concatenated.h - 44)) \
+        #     .set_duration(5) \
+        #     .set_start(1)
+        # with_subscribe_text = CompositeVideoClip([with_audio, text_clip])
 
-        final_clip\
+        with_subscribe_text = with_audio
+
+        with_subscribe_text\
             .subclip(0, audio.duration)\
             .write_videofile("{}/final_video.mp4".format(self.config.folder),
                              verbose=False, logger=None)
-
-        open(flag, "x")
 
     def add_subs(self, video_clip):
         subtitles = SubtitlesClip("{}/vangelo.srt".format(self.config.folder),
@@ -192,5 +209,5 @@ class VideoComposer:
 
 if __name__ == '__main__':
     from config import Config
-    vc = VideoComposer(config=Config("2022-11-18"))
-    vc.generate_preview()
+    # vc = VideoDownloader(config=Config("2022-11-18"))
+    VideoComposer(Config("2022-11-18")).run()

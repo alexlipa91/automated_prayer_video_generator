@@ -27,7 +27,7 @@ if __name__ == '__main__':
 
     vc = VideoComposer(config)
     vc.run()
-    vc.generate_preview()
+    vc.generate_preview_pope()
 
     uploader.upload(config)
 

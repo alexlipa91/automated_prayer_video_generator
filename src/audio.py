@@ -138,12 +138,7 @@ class AudioDownloader:
             return
 
         self.download_audio()
-        self.generate_wav()
-        self.upload_wav_to_gcs_blob()
-
-        if not os.environ["SKIP_SUBS"]:
-            self.call_gts_api()
-            self.generate_subs()
+        self.download_transcript()
 
         open(flag, 'x')
 
@@ -167,5 +162,5 @@ class AudioDownloader:
 
 
 if __name__ == '__main__':
-    ad = AudioDownloader(config=Config(param="2022-11-28"))
+    ad = AudioDownloader(config=Config(param="2022-11-26"))
     ad.download_audio()

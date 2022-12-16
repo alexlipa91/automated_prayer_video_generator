@@ -6,6 +6,7 @@
 # https://github.com/youtube/api-samples/blob/master/python/upload_video.py
 
 import datetime
+import io
 import os
 from http import client
 import httplib2
@@ -16,7 +17,7 @@ import time
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from googleapiclient.http import MediaFileUpload
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 
@@ -51,7 +52,8 @@ CLIENT_SECRETS_FILE = 'client_secret.json'
 
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
-SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube']
+SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube',
+          'https://www.googleapis.com/auth/youtubepartner']
 API_SERVICE_NAME = 'youtube'
 API_VERSION = 'v3'
 
@@ -183,6 +185,36 @@ def add_to_playlist(youtube, video_id):
     print(response)
 
 
+def add_transcript(youtube, video_id, transcript_file_path):
+    req = youtube.captions().insert(
+        part="snippet",
+        body=dict(
+            snippet=dict(
+                videoId=video_id,
+                language="it",
+                name="Trascrizione",
+                isDraft=False
+            )
+        ),
+        media_body=MediaFileUpload(transcript_file_path)
+    )
+    response = req.execute()
+    print(response)
+
+
+def download_transcript_srt(youtube, caption_id, file_path):
+    request = youtube.captions().download(
+        id=caption_id,
+        tfmt="srt",
+    )
+    fh = io.FileIO(file_path, "wb")
+
+    download = MediaIoBaseDownload(fh, request)
+    complete = False
+    while not complete:
+        status, complete = download.next_chunk()
+
+
 def upload(config):
     date_string = datetime.datetime(year=int(config.year),
                                     month=int(config.month),
@@ -201,22 +233,23 @@ def upload(config):
     video_id = initialize_upload(youtube, file, thumbnail, title, description, category, tags, privacy_status)
     set_thumbnail(youtube, video_id, "{}/preview.jpeg".format(config.folder))
     add_to_playlist(youtube, video_id)
+    add_transcript(youtube, video_id, "{}/transcript.txt".format(config.folder))
 
 
-# if __name__ == '__main__':
-#     os.environ["CREDENTIALS_FILE"] = "credentials.storage"
-#
-#     y = get_authenticated_service()
-#
-#     print(dir(y.captions().update(
-#         part="id",
-#         body=dict(
-#             snippet=dict(
-#                 videoId="wGQK4G5ccuI",
-#                 language="it",
-#                 name="test-caption",
-#                 isDraft=False
-#             )
-#         ),
-#         media_body=MediaFileUpload("")
-#     )))
+if __name__ == '__main__':
+    import json
+    # generate_credentials_file()
+    os.environ["CREDENTIALS_FILE"] = "credentials.storage"
+
+    y = get_authenticated_service()
+    # req = y.captions().list(
+    #     part="snippet",
+    #     videoId="Cq3mE4V3DGw"
+    # )
+    # s = json.dumps(req.execute())
+    # print(s)
+
+    # add_transcript(y, "Cq3mE4V3DGw", "20221126/transcript.txt")
+
+    download_transcript_srt(y, "AUieDabTop6Xj678ENZojEnEpQUptwD-tCxem8xUW-OMSlTQnznKZ7YmY2x4XMg",
+                            "20221126/downloaded_transcript.srt")
