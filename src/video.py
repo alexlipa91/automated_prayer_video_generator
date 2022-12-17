@@ -10,6 +10,10 @@ from mutagen.mp3 import MP3
 from moviepy.editor import *
 
 
+WIDTH = 1920
+HEIGHT = 1080
+
+
 class VideoDownloader:
 
     def __init__(self, config):
@@ -51,7 +55,7 @@ class VideoDownloader:
         cut_video = video.subclip(0, get_first)
         self.duration = self.duration + get_first
         # resize
-        resized_video = cut_video.resize(width=960, height=540)
+        resized_video = cut_video.resize(width=WIDTH, height=HEIGHT)
 
         resized_video.write_videofile(file_name, verbose=False, logger=None)
 
@@ -59,11 +63,6 @@ class VideoDownloader:
         print("video file saved {}".format(file_name))
 
     def run(self):
-        flag = "{}/video_downloader_done".format(self.config.folder)
-        if os.path.exists(flag):
-            print("video downloader done...skipping")
-            return
-
         while self.duration < self.audio_duration:
             print("missing duration: {}".format(self.audio_duration - self.duration))
             try:
@@ -71,22 +70,23 @@ class VideoDownloader:
             except Exception:
                 print("failed")
 
-        open(flag, 'x')
-
     @staticmethod
     def refresh_video_ids():
         pexel = Pexels('563492ad6f917000010000016686df7bb84c4d249e89acbc3d0adcd4')
         v_ids = []
         for i in range(1, 20):
             search_videos = pexel.search_videos(query='church', orientation='landscape',
-                                                locale='', size='small', color='',
+                                                locale='', size='medium', color='',
                                                 page=i, per_page=80)
             for v in search_videos["videos"]:
-                file = [x for x in v["video_files"] if x["quality"] == "sd"][0]
-                v_ids.append([file["link"]])
+                hd_files = [x for x in v["video_files"] if x["quality"] == "hd"]
+                if len(hd_files) > 0:
+                    v_ids.append([hd_files[0]["link"]])
+                else:
+                    print("no hd file")
 
         import csv
-        file = open('../resources/videos.csv', 'w+', )
+        file = open('resources/videos.csv', 'w+', )
         with file:
             write = csv.writer(file)
             write.writerows(v_ids)
@@ -171,23 +171,20 @@ class VideoComposer:
         with_audio.write_videofile("{}/dummy.mp4".format(self.config.folder), fps=26)
 
     def run(self):
+        subscribe_prompt_duration = 3
+
         clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(self.config.folder))]
 
-        concatenated = concatenate_videoclips(clips, method="compose")
+        concatenated = concatenate_videoclips(clips, method="compose").set_start(subscribe_prompt_duration)
 
-        audio = mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))
+        audio = CompositeAudioClip([mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))
+                                   .set_start(subscribe_prompt_duration)])
+        subscribe_image = ImageClip("resources/pope_subscribe.jpg").set_start(0)\
+            .set_duration(subscribe_prompt_duration)
 
-        with_audio = concatenated.set_audio(audio)
+        composite = CompositeVideoClip([concatenated, subscribe_image]).set_audio(audio)
 
-        # text_clip = TextClip("Iscriviti per un nuovo video ogni giorno", font="Arial", fontsize=24, color='black') \
-        #     .set_position((20, concatenated.h - 44)) \
-        #     .set_duration(5) \
-        #     .set_start(1)
-        # with_subscribe_text = CompositeVideoClip([with_audio, text_clip])
-
-        with_subscribe_text = with_audio
-
-        with_subscribe_text\
+        composite\
             .subclip(0, audio.duration)\
             .write_videofile("{}/final_video.mp4".format(self.config.folder),
                              verbose=False, logger=None)
@@ -210,4 +207,5 @@ class VideoComposer:
 if __name__ == '__main__':
     from config import Config
     # vc = VideoDownloader(config=Config("2022-11-18"))
+    # vc.run()
     VideoComposer(Config("2022-11-18")).run()
