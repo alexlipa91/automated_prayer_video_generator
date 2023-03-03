@@ -3,7 +3,6 @@ import os
 import requests as requests
 import srt as srt
 from google.cloud import storage
-from google.cloud import speech_v1
 from bs4 import BeautifulSoup
 from pydub import AudioSegment
 from pydub.utils import mediainfo
@@ -22,7 +21,7 @@ class AudioDownloader:
         self.wav_gcs_path = "tmp/{}".format(self.wav_path)
 
     def download_audio(self):
-        print("downloading audio")
+        print("downloading audio from {}".format(self.source_url))
         req = requests.get(self.source_url)
         soup = BeautifulSoup(req.content, "html.parser")
         src = None
@@ -60,28 +59,6 @@ class AudioDownloader:
         blob.upload_from_filename(self.wav_path)
 
         print("File {} uploaded to {}.".format(self.wav_path, self.wav_gcs_path))
-
-    def call_gts_api(self):
-        client = speech_v1.SpeechClient()
-
-        channels, bitrate, sample_rate = AudioDownloader.video_info(self.wav_path)
-
-        config = {
-            "language_code": "it-IT",
-            "sample_rate_hertz": int(sample_rate),
-            "encoding": speech_v1.RecognitionConfig.AudioEncoding.LINEAR16,
-            "audio_channel_count": int(channels),
-            "enable_word_time_offsets": True,
-            "enable_automatic_punctuation": True
-        }
-        audio = {"uri": "gs://{}/{}".format("praryers-channel-video-data", self.wav_gcs_path)}
-
-        operation = client.long_running_recognize(config=config,
-                                                  audio=speech_v1.RecognitionAudio(audio))
-
-        print(u"Waiting for google-text-to-speech operation to complete: {}".format(operation.metadata))
-        self.gts_resp = operation.result()
-        print("Done")
 
     @staticmethod
     def _break_sentences(subs, alternative):
@@ -143,7 +120,7 @@ class AudioDownloader:
         open(flag, 'x')
 
     def download_transcript(self):
-        print("downloading transcript")
+        print("downloading transcript from {}".format(self.source_url))
         req = requests.get(self.source_url)
         soup = BeautifulSoup(req.content, "html.parser")
 
@@ -162,5 +139,5 @@ class AudioDownloader:
 
 
 if __name__ == '__main__':
-    ad = AudioDownloader(config=Config(param="2022-11-26"))
+    ad = AudioDownloader(config=Config(param="2022-03-03"))
     ad.download_audio()
