@@ -8,6 +8,7 @@ from moviepy.video.tools.subtitles import SubtitlesClip
 import random
 from mutagen.mp3 import MP3
 from moviepy.editor import *
+import csv
 
 
 WIDTH = 1920
@@ -71,21 +72,23 @@ class VideoDownloader:
                 print("failed")
 
     @staticmethod
-    def refresh_video_ids():
+    def refresh_video_ids(definition="sd", size="small"):
         pexel = Pexels('563492ad6f917000010000016686df7bb84c4d249e89acbc3d0adcd4')
         v_ids = []
         for i in range(1, 20):
+            print("page {}".format(i))
             search_videos = pexel.search_videos(query='church', orientation='landscape',
-                                                locale='', size='medium', color='',
+                                                locale='', size=size, color='',
                                                 page=i, per_page=80)
-            for v in search_videos["videos"]:
-                hd_files = [x for x in v["video_files"] if x["quality"] == "hd"]
+            videos = search_videos["videos"]
+            print("fetched {} videos".format(len(videos)))
+            for v in videos:
+                hd_files = [x for x in v["video_files"] if x["quality"] == definition]
                 if len(hd_files) > 0:
                     v_ids.append([hd_files[0]["link"]])
                 else:
-                    print("no hd file")
+                    print("no {} file".format(definition))
 
-        import csv
         file = open('resources/videos.csv', 'w+', )
         with file:
             write = csv.writer(file)
@@ -206,6 +209,7 @@ class VideoComposer:
 
 if __name__ == '__main__':
     from config import Config
+    VideoDownloader.refresh_video_ids()
     # vc = VideoDownloader(config=Config("2022-11-18"))
     # vc.run()
-    VideoComposer(Config("2022-11-18")).run()
+    # VideoComposer(Config("2022-11-18")).run()

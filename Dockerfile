@@ -10,10 +10,10 @@ COPY resources /resources
 
 COPY credentials.json /credentials.json
 ENV GOOGLE_APPLICATION_CREDENTIALS=/credentials.json
-COPY credentials.storage /credentials.storage
-ENV CREDENTIALS_FILE=/credentials.storage
+# COPY credentials.storage /credentials.storage
+# ENV CREDENTIALS_FILE=/credentials.storage
 
 RUN mv /etc/ImageMagick-6/policy.xml /etc/ImageMagick-6/policy.xml.bkp
 RUN grep -v pattern="@*" /etc/ImageMagick-6/policy.xml.bkp > /etc/ImageMagick-6/policy.xml
 
-ENTRYPOINT ["python3", "/src/main.py"]
+ENTRYPOINT ["python3", "-u", "/src/main.py"]

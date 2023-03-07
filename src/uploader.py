@@ -7,7 +7,6 @@
 
 import datetime
 import io
-import os
 from http import client
 import httplib2
 import random
@@ -48,7 +47,7 @@ RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 #   https://developers.google.com/youtube/v3/guides/authentication
 # For more information about the client_secrets.json file format, see:
 #   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-CLIENT_SECRETS_FILE = 'client_secret.json'
+CLIENT_SECRETS_FILE = '../client_secret.json'
 
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
@@ -65,7 +64,7 @@ def generate_credentials_file():
         CLIENT_SECRETS_FILE, SCOPES
     )
     credentials = flow.run_local_server(port=8080)
-    with open("credentials.storage", "w") as outfile:
+    with open("../credentials.json", "w") as outfile:
         outfile.write(credentials.to_json())
 
 
@@ -74,7 +73,7 @@ def get_authenticated_service():
     # flow = InstalledAppFlow.from_client_secrets_file(
     #     CLIENT_SECRETS_FILE, SCOPES
     # )
-    credentials = Credentials.from_authorized_user_file(os.environ["CREDENTIALS_FILE"])
+    credentials = Credentials.from_authorized_user_file("../credentials.json")
     # credentials = flow.run_local_server(port=8080)
     return build(API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
@@ -239,7 +238,8 @@ def upload(config):
 if __name__ == '__main__':
     import json
     # generate_credentials_file()
-    os.environ["CREDENTIALS_FILE"] = "credentials.storage"
+    # sys.exit(1)
+    # os.environ["CREDENTIALS_FILE"] = "credentials.json"
 
     y = get_authenticated_service()
     # req = y.captions().list(
@@ -251,5 +251,5 @@ if __name__ == '__main__':
 
     # add_transcript(y, "Cq3mE4V3DGw", "20221126/transcript.txt")
 
-    download_transcript_srt(y, "AUieDabTop6Xj678ENZojEnEpQUptwD-tCxem8xUW-OMSlTQnznKZ7YmY2x4XMg",
-                            "20221126/downloaded_transcript.srt")
+    # download_transcript_srt(y, "AUieDabTop6Xj678ENZojEnEpQUptwD-tCxem8xUW-OMSlTQnznKZ7YmY2x4XMg",
+    #                         "20221126/downloaded_transcript.srt")
