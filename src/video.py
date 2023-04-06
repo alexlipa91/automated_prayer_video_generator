@@ -182,7 +182,7 @@ class VideoComposer:
 
         audio = CompositeAudioClip([mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))
                                    .set_start(subscribe_prompt_duration)])
-        subscribe_image = ImageClip("resources/pope_subscribe.jpg").set_start(0)\
+        subscribe_image = ImageClip("resources/pope_subscribe_2.jpeg").set_start(0)\
             .set_duration(subscribe_prompt_duration)
 
         composite = CompositeVideoClip([concatenated, subscribe_image]).set_audio(audio)
