@@ -9,6 +9,7 @@ import random
 from mutagen.mp3 import MP3
 from moviepy.editor import *
 import csv
+from moviepy.video.fx.resize import resize
 
 
 WIDTH = 1920
@@ -174,6 +175,7 @@ class VideoComposer:
         with_audio.write_videofile("{}/dummy.mp4".format(self.config.folder), fps=26)
 
     def run(self):
+        print("composing video")
         subscribe_prompt_duration = 3
 
         clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(self.config.folder))]
@@ -182,7 +184,7 @@ class VideoComposer:
 
         audio = CompositeAudioClip([mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))
                                    .set_start(subscribe_prompt_duration)])
-        subscribe_image = ImageClip("resources/pope_subscribe_2.jpeg").set_start(0)\
+        subscribe_image = ImageClip("resources/pope_subscribe.jpeg").set_start(0)\
             .set_duration(subscribe_prompt_duration)
 
         composite = CompositeVideoClip([concatenated, subscribe_image]).set_audio(audio)
@@ -208,8 +210,16 @@ class VideoComposer:
 
 
 if __name__ == '__main__':
-    from config import Config
-    VideoDownloader.refresh_video_ids()
-    # vc = VideoDownloader(config=Config("2022-11-18"))
-    # vc.run()
-    # VideoComposer(Config("2022-11-18")).run()
+    subscribe_prompt_duration = 3
+
+    clips = [VideoFileClip("20230409/video_0.mp4"), VideoFileClip("20230409/video_1.mp4")]
+
+    concatenated = concatenate_videoclips(clips, method="compose").set_start(subscribe_prompt_duration)
+
+    subscribe_image = ImageClip("resources/pope_subscribe_2.jpeg").set_start(0).set_duration(subscribe_prompt_duration)
+
+    composite = CompositeVideoClip([concatenated, subscribe_image])
+
+    composite \
+        .write_videofile("20230409/test.mp4",
+                         verbose=True, logger=None)
