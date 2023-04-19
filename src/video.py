@@ -35,9 +35,7 @@ class VideoDownloader:
             pass
 
     def download_video(self, cut_at_seconds=15):
-        print("downloading video {}".format(self.index))
         url = self.videos[self.index]
-        print("url {}".format(url))
         r = requests.get(url)
 
         file_name = "{}/video_{}.mp4".format(self.config.folder, self.index)
@@ -62,11 +60,9 @@ class VideoDownloader:
         resized_video.write_videofile(file_name, verbose=False, logger=None)
 
         os.remove(tmp_file_name)
-        print("video file saved {}".format(file_name))
 
     def run(self):
         while self.duration < self.audio_duration:
-            print("missing duration: {}".format(self.audio_duration - self.duration))
             try:
                 self.download_video()
             except Exception:
@@ -77,12 +73,10 @@ class VideoDownloader:
         pexel = Pexels('563492ad6f917000010000016686df7bb84c4d249e89acbc3d0adcd4')
         v_ids = []
         for i in range(1, 20):
-            print("page {}".format(i))
             search_videos = pexel.search_videos(query='church', orientation='landscape',
                                                 locale='', size=size, color='',
                                                 page=i, per_page=80)
             videos = search_videos["videos"]
-            print("fetched {} videos".format(len(videos)))
             for v in videos:
                 hd_files = [x for x in v["video_files"] if x["quality"] == definition]
                 if len(hd_files) > 0:
@@ -216,7 +210,7 @@ if __name__ == '__main__':
 
     concatenated = concatenate_videoclips(clips, method="compose").set_start(subscribe_prompt_duration)
 
-    subscribe_image = ImageClip("resources/pope_subscribe_2.jpeg").set_start(0).set_duration(subscribe_prompt_duration)
+    subscribe_image = ImageClip("resources/pope_subscribe.jpeg").set_start(0).set_duration(subscribe_prompt_duration)
 
     composite = CompositeVideoClip([concatenated, subscribe_image])
 

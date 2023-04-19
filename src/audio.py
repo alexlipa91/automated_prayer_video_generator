@@ -36,8 +36,6 @@ class AudioDownloader:
         with open(self.mp3_path, 'wb') as f:
             f.write(doc.content)
 
-        print("audio file saved {}".format(self.mp3_path))
-
     @staticmethod
     def video_info(wav_filepath):
         video_data = mediainfo(wav_filepath)
@@ -49,7 +47,6 @@ class AudioDownloader:
 
     def generate_wav(self):
         AudioSegment.from_mp3(self.mp3_path).export(self.wav_path, format="wav")
-        print("wav file saved at {}".format(self.wav_path))
 
     def upload_wav_to_gcs_blob(self):
         storage_client = storage.Client()
@@ -57,8 +54,6 @@ class AudioDownloader:
         blob = bucket.blob(self.wav_gcs_path)
 
         blob.upload_from_filename(self.wav_path)
-
-        print("File {} uploaded to {}.".format(self.wav_path, self.wav_gcs_path))
 
     @staticmethod
     def _break_sentences(subs, alternative):
@@ -98,7 +93,6 @@ class AudioDownloader:
             # First alternative is the most probable result
             subs = AudioDownloader._break_sentences(subs, result.alternatives[0])
 
-        print("Transcribing finished")
         self.write_srt(subs)
 
     def write_srt(self, subs):

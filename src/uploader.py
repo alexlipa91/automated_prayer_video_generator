@@ -127,7 +127,6 @@ def resumable_upload(request):
     retry = 0
     while response is None:
         try:
-            print('Uploading file...')
             status, response = request.next_chunk()
             if response is not None:
                 if 'id' in response:

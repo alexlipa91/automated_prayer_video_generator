@@ -32,7 +32,5 @@ if __name__ == '__main__':
     uploader.upload(config)
 
     end = time.time()
-
-    open("done", "x")
     print("Done in {} seconds".format(end - start))
 
