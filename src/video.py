@@ -1,5 +1,6 @@
 import datetime
 import glob
+import traceback
 
 import requests as requests
 from pexelsapi.pexels import Pexels
@@ -9,8 +10,6 @@ import random
 from mutagen.mp3 import MP3
 from moviepy.editor import *
 import csv
-from moviepy.video.fx.resize import resize
-
 
 WIDTH = 1920
 HEIGHT = 1080
@@ -34,7 +33,7 @@ class VideoDownloader:
         except FileExistsError:
             pass
 
-    def download_video(self, cut_at_seconds=15):
+    def download_video(self):
         url = self.videos[self.index]
         r = requests.get(url)
 
@@ -51,7 +50,7 @@ class VideoDownloader:
         # edit
         video = VideoFileClip(tmp_file_name)
         # cut
-        get_first = min(video.duration, cut_at_seconds)
+        get_first = min(video.duration, self.config.video_parts_max_length_seconds)
         cut_video = video.subclip(0, get_first)
         self.duration = self.duration + get_first
         # resize
@@ -62,32 +61,35 @@ class VideoDownloader:
         os.remove(tmp_file_name)
 
     def run(self):
-        while self.duration < self.audio_duration:
+        target_duration = self.audio_duration if self.config.duration_seconds is None else self.config.duration_seconds
+
+        while self.duration < target_duration:
             try:
                 self.download_video()
             except Exception:
-                print("failed")
+                print("failed video download")
+                traceback.print_exc()
 
-    @staticmethod
-    def refresh_video_ids(definition="sd", size="small"):
-        pexel = Pexels('563492ad6f917000010000016686df7bb84c4d249e89acbc3d0adcd4')
-        v_ids = []
-        for i in range(1, 20):
-            search_videos = pexel.search_videos(query='church', orientation='landscape',
-                                                locale='', size=size, color='',
-                                                page=i, per_page=80)
-            videos = search_videos["videos"]
-            for v in videos:
-                hd_files = [x for x in v["video_files"] if x["quality"] == definition]
-                if len(hd_files) > 0:
-                    v_ids.append([hd_files[0]["link"]])
-                else:
-                    print("no {} file".format(definition))
 
-        file = open('resources/videos.csv', 'w+', )
-        with file:
-            write = csv.writer(file)
-            write.writerows(v_ids)
+def refresh_video_ids(definition="sd", size="small"):
+    pexel = Pexels('563492ad6f917000010000016686df7bb84c4d249e89acbc3d0adcd4')
+    v_ids = []
+    for i in range(1, 20):
+        search_videos = pexel.search_videos(query='church', orientation='landscape',
+                                            locale='', size=size, color='',
+                                            page=i, per_page=80)
+        videos = search_videos["videos"]
+        for v in videos:
+            hd_files = [x for x in v["video_files"] if x["quality"] == definition]
+            if len(hd_files) > 0:
+                v_ids.append([hd_files[0]["link"]])
+            else:
+                print("no {} file".format(definition))
+
+    file = open('resources/videos.csv', 'w+', )
+    with file:
+        write = csv.writer(file)
+        write.writerows(v_ids)
 
 
 class VideoComposer:
@@ -97,34 +99,16 @@ class VideoComposer:
 
     def get_santo_del_giorno(self):
         # todo finish
-        s = requests\
-            .get("https://www.santodelgiorno.it/santi.json?data={}-{}-{}".format(self.year, self.month, self.day))\
+        s = requests \
+            .get("https://www.santodelgiorno.it/santi.json?data={}-{}-{}".format(self.year, self.month, self.day)) \
             .json()
         for x in s:
             print(x["nome"])
 
-    def generate_preview_bible(self):
-        from PIL import ImageDraw, Image, ImageFont
-
-        img = Image.open('resources/bible.jpeg')
-        final_img = ImageDraw.Draw(img)
-        w, h = img.size
-        font_main = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 160)
-        font_small = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 110)
-
-        date = datetime.datetime(year=int(self.config.year), month=int(self.config.month), day=int(self.config.day))
-
-        final_img.text((w/2, h/4), "Letture del Giorno\n\n\n\n\n\n{}".format(self.get_date_string(date)),
-                       fill=(255, 255, 255), align="center", anchor="ms", font=font_main)
-        final_img.text((w/2, h/2.5), "con commento del Santo Padre",
-                       fill=(255, 255, 255), align="center", anchor="ms", font=font_small)
-        img.show()
-        img.save("{}/preview.jpeg".format(self.config.folder))
-
     def generate_preview_pope(self):
         from PIL import ImageDraw, Image, ImageFont
 
-        img = Image.open('resources/pope.jpeg')
+        img = Image.open('resources/pope_empty.jpeg')
         final_img = ImageDraw.Draw(img)
         w, h = img.size
         font_main = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 100)
@@ -132,11 +116,11 @@ class VideoComposer:
 
         date = datetime.datetime(year=int(self.config.year), month=int(self.config.month), day=int(self.config.day))
 
-        final_img.text((w/3, h/4), "Letture del\nGiorno",
+        final_img.text((w / 3, h / 4), "Letture del\nGiorno",
                        fill=(255, 255, 255), align="center", anchor="ms", font=font_main)
-        final_img.text((w/3, h/1.61), "con commento del\nSanto Padre",
+        final_img.text((w / 3, h / 1.61), "con commento del\nSanto Padre",
                        fill=(255, 255, 255), align="center", anchor="ms", font=font_small)
-        final_img.text((w/3, h/1.16), "{}".format(self.get_date_string(date)),
+        final_img.text((w / 3, h / 1.16), "{}".format(self.get_date_string(date)),
                        fill=(255, 255, 255), align="center", anchor="ms",
                        font=ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 70))
 
@@ -160,31 +144,34 @@ class VideoComposer:
         }
         return "{} {} {}".format(date.day, months[date.month], date.year)
 
-    def dummy_video(self):
-        img = ['resources/bible.jpeg']
-        audio = mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))
-        clips = [ImageClip(m).set_duration(audio.duration) for m in img]
-        concat_clip = concatenate_videoclips(clips, method="compose")
-        with_audio = concat_clip.set_audio(audio)
-        with_audio.write_videofile("{}/dummy.mp4".format(self.config.folder), fps=26)
-
     def run(self):
         print("composing video")
         subscribe_prompt_duration = 3
 
         clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(self.config.folder))]
+        print("concatenating {} videos".format(len(clips)))
 
         concatenated = concatenate_videoclips(clips, method="compose").set_start(subscribe_prompt_duration)
 
         audio = CompositeAudioClip([mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))
                                    .set_start(subscribe_prompt_duration)])
-        subscribe_image = ImageClip("resources/pope_subscribe.jpeg").set_start(0)\
-            .set_duration(subscribe_prompt_duration)
+        if self.config.duration_seconds:
+            audio = audio.set_duration(self.config.duration_seconds)
+
+        print("audio duration {}".format(audio.duration))
+
+        subscribe_image = ImageClip("resources/pope_subscribe.jpeg").set_start(0) \
+            .set_duration(subscribe_prompt_duration)\
+            # .resize(1920, 1082)
+
+        print("subscribe image built")
 
         composite = CompositeVideoClip([concatenated, subscribe_image]).set_audio(audio)
 
-        composite\
-            .subclip(0, audio.duration)\
+        print("composed")
+
+        composite \
+            .subclip(0, audio.duration) \
             .write_videofile("{}/final_video.mp4".format(self.config.folder),
                              verbose=False, logger=None)
 

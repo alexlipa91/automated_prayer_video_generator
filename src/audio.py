@@ -37,25 +37,6 @@ class AudioDownloader:
             f.write(doc.content)
 
     @staticmethod
-    def video_info(wav_filepath):
-        video_data = mediainfo(wav_filepath)
-        channels = video_data["channels"]
-        bit_rate = video_data["bit_rate"]
-        sample_rate = video_data["sample_rate"]
-
-        return channels, bit_rate, sample_rate
-
-    def generate_wav(self):
-        AudioSegment.from_mp3(self.mp3_path).export(self.wav_path, format="wav")
-
-    def upload_wav_to_gcs_blob(self):
-        storage_client = storage.Client()
-        bucket = storage_client.bucket("praryers-channel-video-data")
-        blob = bucket.blob(self.wav_gcs_path)
-
-        blob.upload_from_filename(self.wav_path)
-
-    @staticmethod
     def _break_sentences(subs, alternative):
         first_word = True
         char_count = 0
@@ -103,15 +84,8 @@ class AudioDownloader:
         f.close()
 
     def run(self):
-        flag = "{}/audio_downloader_done".format(self.config.folder)
-        if os.path.exists(flag):
-            print("audio download done...skipping")
-            return
-
         self.download_audio()
         self.download_transcript()
-
-        open(flag, 'x')
 
     def download_transcript(self):
         print("downloading transcript from {}".format(self.source_url))
@@ -133,5 +107,5 @@ class AudioDownloader:
 
 
 if __name__ == '__main__':
-    ad = AudioDownloader(config=Config(param="2022-03-03"))
+    ad = AudioDownloader(config=Config(date="2022-03-03"))
     ad.download_audio()
