@@ -204,13 +204,16 @@ class VideoComposer:
         return CompositeVideoClip([video_clip, subtitles])
 
     def find_subs(self):
-        db = firestore.client()
-        audio_only_video_id = db.collection("video_uploads").document(self.config.date).get().to_dict()["audio_only_video_id"]
-        transcript_id = find_transcript_auto_synced(audio_only_video_id)
-        if transcript_id:
-            download_transcript_srt(transcript_id, "{}/vangelo.srt".format(self.config.folder))
-            return True
-        return False
+        try:
+            db = firestore.client()
+            audio_only_video_id = db.collection("video_uploads").document(self.config.date).get().to_dict()["audio_only_video_id"]
+            transcript_id = find_transcript_auto_synced(audio_only_video_id)
+            if transcript_id:
+                download_transcript_srt(transcript_id, "{}/vangelo.srt".format(self.config.folder))
+                return True
+            return False
+        except Exception:
+            return False
 
 
 if __name__ == '__main__':
