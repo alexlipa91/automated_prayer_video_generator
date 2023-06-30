@@ -175,6 +175,12 @@ class VideoComposer:
             .write_videofile("{}/final_video.mp4".format(self.config.folder),
                              verbose=False, logger=None)
 
+    def run_audio_only(self):
+        audio = CompositeAudioClip([mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))])
+        ColorClip((200, 200), (0, 0, 0), duration=audio.duration)\
+            .write_videofile("{}/final_video_audio_only.mp4".format(self.config.folder),
+                             verbose=False, logger=None, fps=24)
+
     def add_subs(self, video_clip):
         subtitles = SubtitlesClip("{}/vangelo.srt".format(self.config.folder),
                                   lambda txt: TextClip(txt,

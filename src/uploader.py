@@ -213,6 +213,19 @@ def download_transcript_srt(youtube, caption_id, file_path):
         status, complete = download.next_chunk()
 
 
+def upload_audio_only(config):
+    date_string = datetime.datetime(year=int(config.year),
+                                    month=int(config.month),
+                                    day=int(config.day)).strftime("%d %B %Y")
+    file = "{}/final_video_audio_only.mp4".format(config.folder)
+    title = "Vangelo del Giorno: {} (audio-only)".format(date_string)
+    privacy_status = "private"
+
+    youtube = get_authenticated_service()
+    video_id = initialize_upload(youtube, file, None, title, "", "22", [], privacy_status)
+    add_transcript(youtube, video_id, "{}/transcript.txt".format(config.folder))
+
+
 def upload(config):
     date_string = datetime.datetime(year=int(config.year),
                                     month=int(config.month),
