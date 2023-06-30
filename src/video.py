@@ -11,6 +11,10 @@ from mutagen.mp3 import MP3
 from moviepy.editor import *
 import csv
 
+from firebase_admin import firestore
+
+from src.uploader import find_transcript_auto_synced, download_transcript_srt
+
 WIDTH = 1920
 HEIGHT = 1080
 
@@ -170,6 +174,9 @@ class VideoComposer:
 
         print("composed")
 
+        if self.find_subs():
+            composite = self.add_subs(composite)
+
         composite \
             .subclip(0, audio.duration) \
             .write_videofile("{}/final_video.mp4".format(self.config.folder),
@@ -178,6 +185,7 @@ class VideoComposer:
     def run_audio_only(self):
         audio = CompositeAudioClip([mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))])
         ColorClip((200, 200), (0, 0, 0), duration=audio.duration)\
+            .set_audio(audio)\
             .write_videofile("{}/final_video_audio_only.mp4".format(self.config.folder),
                              verbose=False, logger=None, fps=24)
 
@@ -194,6 +202,15 @@ class VideoComposer:
                                                        color='white')) \
             .set_pos('center')
         return CompositeVideoClip([video_clip, subtitles])
+
+    def find_subs(self):
+        db = firestore.client()
+        audio_only_video_id = db.collection("video_uploads").document(self.config.date).get().to_dict()["audio_only_video_id"]
+        transcript_id = find_transcript_auto_synced(audio_only_video_id)
+        if transcript_id:
+            download_transcript_srt(transcript_id, "{}/vangelo.srt".format(self.config.folder))
+            return True
+        return False
 
 
 if __name__ == '__main__':

@@ -73,7 +73,7 @@ def get_authenticated_service():
     # flow = InstalledAppFlow.from_client_secrets_file(
     #     CLIENT_SECRETS_FILE, SCOPES
     # )
-    credentials = Credentials.from_authorized_user_file("../credentials.json")
+    credentials = Credentials.from_authorized_user_file("credentials.json")
     # credentials = flow.run_local_server(port=8080)
     return build(API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
@@ -200,7 +200,8 @@ def add_transcript(youtube, video_id, transcript_file_path):
     print(response)
 
 
-def download_transcript_srt(youtube, caption_id, file_path):
+def download_transcript_srt(caption_id, file_path):
+    youtube = get_authenticated_service()
     request = youtube.captions().download(
         id=caption_id,
         tfmt="srt",
@@ -224,6 +225,7 @@ def upload_audio_only(config):
     youtube = get_authenticated_service()
     video_id = initialize_upload(youtube, file, None, title, "", "22", [], privacy_status)
     add_transcript(youtube, video_id, "{}/transcript.txt".format(config.folder))
+    return video_id
 
 
 def upload(config):
@@ -247,19 +249,31 @@ def upload(config):
     add_transcript(youtube, video_id, "{}/transcript.txt".format(config.folder))
 
 
+def find_transcript_auto_synced(video_id):
+    youtube = get_authenticated_service()
+    req = youtube.captions().list(
+        part="snippet",
+        videoId=video_id
+    )
+    resp = req.execute()
+    for t in resp["items"]:
+        if t["snippet"]["isAutoSynced"]:
+            if t["snippet"]["status"] != "serving":
+                print("still syncing...")
+                return None
+            print("found track {}".format(t["id"]))
+            return t["id"]
+
+
 if __name__ == '__main__':
     import json
     # generate_credentials_file()
     # sys.exit(1)
     # os.environ["CREDENTIALS_FILE"] = "credentials.json"
 
-    y = get_authenticated_service()
-    # req = y.captions().list(
-    #     part="snippet",
-    #     videoId="Cq3mE4V3DGw"
-    # )
-    # s = json.dumps(req.execute())
-    # print(s)
+    # y = get_authenticated_service()
+    transcript_id = find_transcript_auto_synced("Fj3kehnKS6I")
+    download_transcript_srt(transcript_id, "test.srt")
 
     # add_transcript(y, "Cq3mE4V3DGw", "20221126/transcript.txt")
 

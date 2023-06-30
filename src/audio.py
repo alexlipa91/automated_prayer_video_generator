@@ -1,11 +1,6 @@
-import os
-
 import requests as requests
 import srt as srt
-from google.cloud import storage
 from bs4 import BeautifulSoup
-from pydub import AudioSegment
-from pydub.utils import mediainfo
 from config import Config
 
 

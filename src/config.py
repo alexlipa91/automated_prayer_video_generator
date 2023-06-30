@@ -4,6 +4,7 @@ import os
 class Config:
 
     def __init__(self, date, duration_seconds=None):
+        self.date = date
         param_tokens = date.split("-")
         self.year = str(param_tokens[0]).zfill(2)
         self.month = str(param_tokens[1]).zfill(2)

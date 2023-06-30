@@ -2,11 +2,14 @@ import os
 import sys
 import time
 
+import firebase_admin
+
 import uploader
 from audio import AudioDownloader
 from config import Config
 from video import VideoDownloader, VideoComposer
 from datetime import datetime
+from firebase_admin import firestore
 
 
 def build_and_upload_audio_only():
@@ -23,7 +26,10 @@ def build_and_upload_audio_only():
     vc = VideoComposer(config)
     vc.run_audio_only()
 
-    uploader.upload_audio_only(config)
+    video_id = uploader.upload_audio_only(config)
+
+    db = firestore.client()
+    db.collection('video_uploads').document(date_param).set({"audio_only_video_id": video_id})
 
 
 def build_and_upload():
@@ -53,6 +59,8 @@ def build_and_upload():
 
 
 if __name__ == '__main__':
+    firebase_admin.initialize_app()
+
     if os.environ.get("AUDIO_ONLY", "0") == "1":
         build_and_upload_audio_only()
     else:
