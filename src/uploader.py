@@ -263,6 +263,8 @@ def find_transcript_auto_synced(video_id):
                 return None
             print("found track {}".format(t["id"]))
             return t["id"]
+    print("not found any auto-synced caption")
+    return None
 
 
 if __name__ == '__main__':

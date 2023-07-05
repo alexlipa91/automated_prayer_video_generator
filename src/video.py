@@ -13,7 +13,7 @@ import csv
 
 from firebase_admin import firestore
 
-from src.uploader import find_transcript_auto_synced, download_transcript_srt
+from uploader import find_transcript_auto_synced, download_transcript_srt
 
 WIDTH = 1920
 HEIGHT = 1080
@@ -174,8 +174,11 @@ class VideoComposer:
 
         print("composed")
 
-        if self.find_subs():
+        if self.find_subs() and os.environ.get("SKIP_SUBS", 0) == 0:
+            print("adding subs")
             composite = self.add_subs(composite)
+        else:
+            print("skipping subs")
 
         composite \
             .subclip(0, audio.duration) \
@@ -207,12 +210,17 @@ class VideoComposer:
         try:
             db = firestore.client()
             audio_only_video_id = db.collection("video_uploads").document(self.config.date).get().to_dict()["audio_only_video_id"]
+            print("looking for subs from audio-only video {}".format(audio_only_video_id))
+
             transcript_id = find_transcript_auto_synced(audio_only_video_id)
             if transcript_id:
                 download_transcript_srt(transcript_id, "{}/vangelo.srt".format(self.config.folder))
+                print("downloading transcript")
                 return True
             return False
         except Exception:
+            print("error when looking for subs")
+            traceback.print_exc()
             return False
 
 

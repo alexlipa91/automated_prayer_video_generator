@@ -9,7 +9,7 @@ COPY src /src
 COPY resources /resources
 
 COPY credentials.json /credentials.json
-ENV GOOGLE_APPLICATION_CREDENTIALS=/credentials.json
+# ENV GOOGLE_APPLICATION_CREDENTIALS=/credentials.json
 # COPY credentials.storage /credentials.storage
 # ENV CREDENTIALS_FILE=/credentials.storage
 
