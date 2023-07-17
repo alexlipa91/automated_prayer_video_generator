@@ -7,12 +7,13 @@
 
 import datetime
 import io
+import os
 from http import client
 import httplib2
 import random
 import time
 
-
+from google.cloud import storage
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -229,6 +230,18 @@ def upload_audio_only(config):
 
 
 def upload(config):
+    if os.environ.get("UPLOAD_TO_GCS", 0) == 1:
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket("prayers-channel-tmp")
+
+        file_name = '{}/final_video.mp4'.format(config.folder)
+        blob = bucket.blob(file_name)
+        blob.upload_from_filename(file_name)
+    else:
+        _upload_to_youtube(config)
+
+
+def _upload_to_youtube(config):
     date_string = datetime.datetime(year=int(config.year),
                                     month=int(config.month),
                                     day=int(config.day)).strftime("%d %B %Y")

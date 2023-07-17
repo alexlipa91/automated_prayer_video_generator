@@ -58,7 +58,8 @@ class VideoDownloader:
         cut_video = video.subclip(0, get_first)
         self.duration = self.duration + get_first
         # resize
-        resized_video = cut_video.resize(width=WIDTH, height=HEIGHT)
+        resized_video = cut_video.resize((WIDTH, HEIGHT))
+        print("downloaded video size {}".format(resized_video.size))
 
         resized_video.write_videofile(file_name, verbose=False, logger=None)
 
@@ -128,7 +129,7 @@ class VideoComposer:
                        fill=(255, 255, 255), align="center", anchor="ms",
                        font=ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 70))
 
-        img.show()
+        print("preview image size is {}".format(img.size))
         img.save("{}/preview.jpeg".format(self.config.folder))
 
     def get_date_string(self, date):
@@ -155,7 +156,7 @@ class VideoComposer:
         clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(self.config.folder))]
         print("concatenating {} videos".format(len(clips)))
 
-        concatenated = concatenate_videoclips(clips, method="compose").set_start(subscribe_prompt_duration)
+        final_video = concatenate_videoclips(clips, method="compose").set_start(subscribe_prompt_duration)
 
         audio = CompositeAudioClip([mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))
                                    .set_start(subscribe_prompt_duration)])
@@ -164,24 +165,23 @@ class VideoComposer:
 
         print("audio duration {}".format(audio.duration))
 
-        subscribe_image = ImageClip("resources/pope_subscribe.jpeg").set_start(0) \
-            .set_duration(subscribe_prompt_duration)\
-            # .resize(1920, 1082)
-
-        print("subscribe image built")
-
-        composite = CompositeVideoClip([concatenated, subscribe_image]).set_audio(audio)
-
-        print("composed")
-
         if self.find_subs() and os.environ.get("SKIP_SUBS", 0) == 0:
             print("adding subs")
-            composite = self.add_subs(composite)
+            final_video = self.add_subs(final_video, subscribe_prompt_duration)
         else:
             print("skipping subs")
 
-        composite \
-            .subclip(0, audio.duration) \
+        subscribe_image = ImageClip("resources/pope_subscribe.jpeg").set_start(0) \
+            .set_duration(subscribe_prompt_duration)\
+            .resize((WIDTH, HEIGHT))
+        print("subscribe image built: size {}".format(subscribe_image.size))
+
+        final_video = CompositeVideoClip([final_video, subscribe_image]).set_audio(audio)
+
+        print("composed")
+        print("final video size is {}".format(final_video.size))
+        final_video \
+            .subclip(0, audio.duration + subscribe_prompt_duration) \
             .write_videofile("{}/final_video.mp4".format(self.config.folder),
                              verbose=False, logger=None)
 
@@ -192,7 +192,7 @@ class VideoComposer:
             .write_videofile("{}/final_video_audio_only.mp4".format(self.config.folder),
                              verbose=False, logger=None, fps=24)
 
-    def add_subs(self, video_clip):
+    def add_subs(self, video_clip, start_seconds):
         subtitles = SubtitlesClip("{}/vangelo.srt".format(self.config.folder),
                                   lambda txt: TextClip(txt,
                                                        font='Tahoma-bold',
@@ -202,7 +202,8 @@ class VideoComposer:
                                                        stroke_color="black",
                                                        stroke_width=2,
                                                        # transparent=False,
-                                                       color='white')) \
+                                                       color='white'))\
+            .set_start(start_seconds)\
             .set_pos('center')
         return CompositeVideoClip([video_clip, subtitles])
 
@@ -223,18 +224,3 @@ class VideoComposer:
             traceback.print_exc()
             return False
 
-
-if __name__ == '__main__':
-    subscribe_prompt_duration = 3
-
-    clips = [VideoFileClip("20230409/video_0.mp4"), VideoFileClip("20230409/video_1.mp4")]
-
-    concatenated = concatenate_videoclips(clips, method="compose").set_start(subscribe_prompt_duration)
-
-    subscribe_image = ImageClip("resources/pope_subscribe.jpeg").set_start(0).set_duration(subscribe_prompt_duration)
-
-    composite = CompositeVideoClip([concatenated, subscribe_image])
-
-    composite \
-        .write_videofile("20230409/test.mp4",
-                         verbose=True, logger=None)
