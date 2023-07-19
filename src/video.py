@@ -59,7 +59,6 @@ class VideoDownloader:
         self.duration = self.duration + get_first
         # resize
         resized_video = cut_video.resize((WIDTH, HEIGHT))
-        print("downloaded video size {}".format(resized_video.size))
 
         resized_video.write_videofile(file_name, verbose=False, logger=None)
 
@@ -72,8 +71,8 @@ class VideoDownloader:
             try:
                 self.download_video()
             except Exception:
-                print("failed video download")
-                traceback.print_exc()
+                print("failed video download...skipping it")
+                # traceback.print_exc()
 
 
 def refresh_video_ids(definition="sd", size="small"):
@@ -129,7 +128,6 @@ class VideoComposer:
                        fill=(255, 255, 255), align="center", anchor="ms",
                        font=ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 70))
 
-        print("preview image size is {}".format(img.size))
         img.save("{}/preview.jpeg".format(self.config.folder))
 
     def get_date_string(self, date):
@@ -150,36 +148,37 @@ class VideoComposer:
         return "{} {} {}".format(date.day, months[date.month], date.year)
 
     def run(self):
+        parts = []
         print("composing video")
         subscribe_prompt_duration = 3
 
         clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(self.config.folder))]
         print("concatenating {} videos".format(len(clips)))
+        video = concatenate_videoclips(clips, method="compose").set_start(subscribe_prompt_duration)
+        parts.append(video)
 
-        final_video = concatenate_videoclips(clips, method="compose").set_start(subscribe_prompt_duration)
-
+        # audio
         audio = CompositeAudioClip([mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))
                                    .set_start(subscribe_prompt_duration)])
         if self.config.duration_seconds:
             audio = audio.set_duration(self.config.duration_seconds)
-
         print("audio duration {}".format(audio.duration))
 
+        # subs
         if self.find_subs() and os.environ.get("SKIP_SUBS", 0) == 0:
             print("adding subs")
-            final_video = self.add_subs(final_video, subscribe_prompt_duration)
+            parts.append(self.get_subs(video.size, subscribe_prompt_duration))
         else:
             print("skipping subs")
 
-        subscribe_image = ImageClip("resources/pope_subscribe.jpeg").set_start(0) \
-            .set_duration(subscribe_prompt_duration)\
-            .resize((WIDTH, HEIGHT))
-        print("subscribe image built: size {}".format(subscribe_image.size))
+        # subscribe prompt
+        parts.append(ImageClip("resources/pope_subscribe.jpeg").set_start(0)
+                     .set_duration(subscribe_prompt_duration)
+                     .resize((WIDTH, HEIGHT)))
 
-        final_video = CompositeVideoClip([final_video, subscribe_image]).set_audio(audio)
+        final_video = CompositeVideoClip(parts).set_audio(audio)
 
-        print("composed")
-        print("final video size is {}".format(final_video.size))
+        print("composed; final video size is {}".format(final_video.size))
         final_video \
             .subclip(0, audio.duration + subscribe_prompt_duration) \
             .write_videofile("{}/final_video.mp4".format(self.config.folder),
@@ -192,12 +191,12 @@ class VideoComposer:
             .write_videofile("{}/final_video_audio_only.mp4".format(self.config.folder),
                              verbose=False, logger=None, fps=24)
 
-    def add_subs(self, video_clip, start_seconds):
+    def get_subs(self, video_clip_size, start_seconds):
         subtitles = SubtitlesClip("{}/vangelo.srt".format(self.config.folder),
                                   lambda txt: TextClip(txt,
                                                        font='Tahoma-bold',
                                                        method="caption",
-                                                       size=video_clip.size,
+                                                       size=video_clip_size,
                                                        fontsize=48,
                                                        stroke_color="black",
                                                        stroke_width=2,
@@ -205,7 +204,7 @@ class VideoComposer:
                                                        color='white'))\
             .set_start(start_seconds)\
             .set_pos('center')
-        return CompositeVideoClip([video_clip, subtitles])
+        return subtitles
 
     def find_subs(self):
         try:
