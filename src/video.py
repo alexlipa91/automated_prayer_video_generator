@@ -199,7 +199,7 @@ class VideoComposer:
                                                        size=video_clip_size,
                                                        fontsize=48,
                                                        stroke_color="white",
-                                                       stroke_width=6,
+                                                       stroke_width=3,
                                                        # transparent=False,
                                                        color='white'))\
             .set_start(start_seconds)\
