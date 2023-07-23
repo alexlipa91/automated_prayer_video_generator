@@ -91,8 +91,8 @@ class AudioDownloader:
 
         content = soup.findAll('div', attrs={"class": "section__content"})
         for x in content:
-            last_p = x.findAll("p")[-1]
-            final_text = final_text + last_p.getText()
+            for p in x.findAll("p"):
+                final_text = final_text + p.getText() + " "
 
         splitted = final_text.split()
         final_text_in_lines = [' '.join(splitted[i: i + 10]) for i in range(0, len(splitted), 10)]
