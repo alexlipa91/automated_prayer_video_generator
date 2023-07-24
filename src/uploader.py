@@ -20,7 +20,6 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-
 # Explicitly tell the underlying HTTP transport library not to retry, since
 # we are handling retry logic ourselves.
 httplib2.RETRIES = 1
@@ -117,6 +116,7 @@ def initialize_upload(youtube, file, thumbnail, title, description, category, ta
     )
 
     return resumable_upload(insert_request)
+
 
 # This method implements an exponential backoff strategy to resume a
 # failed upload.
@@ -241,12 +241,42 @@ def upload(config):
         _upload_to_youtube(config)
 
 
+def get_month_name(m):
+    if m == 1:
+        return "Gennaio"
+    if m == 2:
+        return "Febbraio"
+    if m == 3:
+        return "Marzo"
+    if m == 4:
+        return "Aprile"
+    if m == 5:
+        return "Maggio"
+    if m == 6:
+        return "Giugno"
+    if m == 7:
+        return "Luglio"
+    if m == 8:
+        return "Agosto"
+    if m == 9:
+        return "Settembre"
+    if m == 10:
+        return "Ottobre"
+    if m == 11:
+        return "Novembre"
+    if m == 12:
+        return "Dicembre"
+    return ""
+
+
 def _upload_to_youtube(config):
     date_string = datetime.datetime(year=int(config.year),
                                     month=int(config.month),
-                                    day=int(config.day)).strftime("%d %B %Y")
+                                    day=int(config.day)).strftime("%d xxxx %Y") \
+        .replace("xxxx", get_month_name(config.month))
+
     file = "{}/final_video.mp4".format(config.folder)
-    source_url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html"\
+    source_url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html" \
         .format(config.year, config.month, config.day)
     thumbnail = "{}/preview.jpeg".format(config.folder)
     title = "Vangelo del Giorno: {}".format(date_string)
