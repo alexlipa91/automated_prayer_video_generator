@@ -8,6 +8,7 @@
 import datetime
 import io
 import os
+import sys
 from http import client
 import httplib2
 import random
@@ -242,6 +243,7 @@ def upload(config):
 
 
 def get_month_name(m):
+    print(m)
     if m == 1:
         return "Gennaio"
     if m == 2:
@@ -273,8 +275,7 @@ def _upload_to_youtube(config):
     date_string = datetime.datetime(year=int(config.year),
                                     month=int(config.month),
                                     day=int(config.day)).strftime("%d xxxx %Y") \
-        .replace("xxxx", get_month_name(config.month))
-
+        .replace("xxxx", get_month_name(int(config.month)))
     file = "{}/final_video.mp4".format(config.folder)
     source_url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html" \
         .format(config.year, config.month, config.day)
