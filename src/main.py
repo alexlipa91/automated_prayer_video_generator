@@ -43,7 +43,7 @@ def build_and_upload():
     vd = VideoDownloader(config, vocals_mp3_path)
     vd.run()
 
-    vc = VideoComposer(config, mp3_path)
+    vc = VideoComposer(config, vocals_mp3_path)
     file_path = vc.run()
     preview_image_path = vc.generate_preview_pope()
 

@@ -108,8 +108,8 @@ class AudioProcessor:
         self.config = config
 
     def run(self):
+        # todo considering warming up model by downloading it in the dockerbuild
         print("Splitting {} using demucs".format(self.mp3_path))
-        os.system("demucs {} --two-stems vocals --mp3".format(self.mp3_path))
-        os.rename("/separated/htdemucs/vangelo/vocals.mp3", "/output/vocals.mp3 >/dev/null 2>&")
-        return "/output/vocals.mp3"
+        os.system("demucs {} --out /output --two-stems vocals --mp3 >/dev/null 2>&1".format(self.mp3_path))
+        return "/output/htdemucs/vangelo/vocals.mp3"
 
