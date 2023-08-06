@@ -216,30 +216,42 @@ def download_transcript_srt(caption_id, file_path):
         status, complete = download.next_chunk()
 
 
-def upload_audio_only(config):
+def upload_audio_only(config, video_path, transcript_path):
+    if config.save_local:
+        return
     date_string = datetime.datetime(year=int(config.year),
                                     month=int(config.month),
                                     day=int(config.day)).strftime("%d %B %Y")
-    file = "{}/final_video_audio_only.mp4".format(config.folder)
     title = "Vangelo del Giorno: {} (audio-only)".format(date_string)
     privacy_status = "private"
 
     youtube = get_authenticated_service()
-    video_id = initialize_upload(youtube, file, None, title, "", "22", [], privacy_status)
-    add_transcript(youtube, video_id, "{}/transcript.txt".format(config.folder))
+    video_id = initialize_upload(youtube, video_path, None, title, "", "22", [], privacy_status)
+    add_transcript(youtube, video_id, transcript_path)
     return video_id
 
 
-def upload(config):
-    if os.environ.get("UPLOAD_TO_GCS", 0) == 1:
-        storage_client = storage.Client()
-        bucket = storage_client.get_bucket("prayers-channel-tmp")
+def upload(config, video_path, preview_path, transcript_path):
+    if config.save_local == 1:
+        return
+    date_string = datetime.datetime(year=int(config.year),
+                                    month=int(config.month),
+                                    day=int(config.day)).strftime("%d xxxx %Y") \
+        .replace("xxxx", get_month_name(int(config.month)))
+    source_url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html" \
+        .format(config.year, config.month, config.day)
+    title = "Vangelo del Giorno: {}".format(date_string)
+    description = "Vangelo e letture del giorno, con commento del Santo Padre\n\nOfferto da: {}".format(source_url)
+    category = "22"
+    tags = ["vangelo", "preghiere", "chiesa", "gesù", "bibbia", "vaticano", "papa"]
+    privacy_status = "public"
 
-        file_name = '{}/final_video.mp4'.format(config.folder)
-        blob = bucket.blob(file_name)
-        blob.upload_from_filename(file_name)
-    else:
-        _upload_to_youtube(config)
+    youtube = get_authenticated_service()
+    video_id = initialize_upload(youtube, video_path, preview_path, title, description, category, tags, privacy_status)
+    set_thumbnail(youtube, video_id, preview_path)
+    add_to_playlist(youtube, video_id)
+    add_transcript(youtube, video_id, transcript_path)
+    return video_id
 
 
 def get_month_name(m):
@@ -269,28 +281,6 @@ def get_month_name(m):
     if m == 12:
         return "Dicembre"
     return ""
-
-
-def _upload_to_youtube(config):
-    date_string = datetime.datetime(year=int(config.year),
-                                    month=int(config.month),
-                                    day=int(config.day)).strftime("%d xxxx %Y") \
-        .replace("xxxx", get_month_name(int(config.month)))
-    file = "{}/final_video.mp4".format(config.folder)
-    source_url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html" \
-        .format(config.year, config.month, config.day)
-    thumbnail = "{}/preview.jpeg".format(config.folder)
-    title = "Vangelo del Giorno: {}".format(date_string)
-    description = "Vangelo e letture del giorno, con commento del Santo Padre\n\nOfferto da: {}".format(source_url)
-    category = "22"
-    tags = ["vangelo", "preghiere", "chiesa", "gesù", "bibbia", "vaticano", "papa"]
-    privacy_status = "public"
-
-    youtube = get_authenticated_service()
-    video_id = initialize_upload(youtube, file, thumbnail, title, description, category, tags, privacy_status)
-    set_thumbnail(youtube, video_id, "{}/preview.jpeg".format(config.folder))
-    add_to_playlist(youtube, video_id)
-    add_transcript(youtube, video_id, "{}/transcript.txt".format(config.folder))
 
 
 def find_transcript_auto_synced(video_id):

@@ -1,7 +1,9 @@
+import os
+
 import requests as requests
 import srt as srt
 from bs4 import BeautifulSoup
-from config import Config
+from config import get_config
 
 
 class AudioDownloader:
@@ -11,9 +13,6 @@ class AudioDownloader:
 
         self.source_url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html" \
             .format(config.year, config.month, config.day)
-        self.mp3_path = "{}/vangelo.mp3".format(config.folder)
-        self.wav_path = "{}/vangelo.wav".format(config.folder)
-        self.wav_gcs_path = "tmp/{}".format(self.wav_path)
 
     def download_audio(self):
         print("downloading audio from {}".format(self.source_url))
@@ -28,8 +27,10 @@ class AudioDownloader:
             raise Exception("Not able to parse source to get audio url")
 
         doc = requests.get(src)
-        with open(self.mp3_path, 'wb') as f:
+        mp3_path = "/output/vangelo.mp3"
+        with open(mp3_path, 'wb') as f:
             f.write(doc.content)
+        return mp3_path
 
     @staticmethod
     def _break_sentences(subs, alternative):
@@ -72,15 +73,11 @@ class AudioDownloader:
         self.write_srt(subs)
 
     def write_srt(self, subs):
-        srt_file = "{}/vangelo.srt".format(self.config.folder)
+        srt_file = "/output/vangelo.srt"
         print("Writing subtitles to {}".format(srt_file))
         f = open(srt_file, 'w')
         f.writelines(srt.compose(subs))
         f.close()
-
-    def run(self):
-        self.download_audio()
-        self.download_transcript()
 
     def download_transcript(self):
         print("downloading transcript from {}".format(self.source_url))
@@ -97,10 +94,22 @@ class AudioDownloader:
         splitted = final_text.split()
         final_text_in_lines = [' '.join(splitted[i: i + 10]) for i in range(0, len(splitted), 10)]
 
-        with open("{}/transcript.txt".format(self.config.folder), "w") as text_file:
+        file_path = "/output/transcript.txt"
+        with open(file_path, "w") as text_file:
             text_file.write('\n'.join(final_text_in_lines))
 
+        return file_path
 
-if __name__ == '__main__':
-    ad = AudioDownloader(config=Config(date="2022-03-03"))
-    ad.download_audio()
+
+class AudioProcessor:
+
+    def __init__(self, config, mp3_path):
+        self.mp3_path = mp3_path
+        self.config = config
+
+    def run(self):
+        print("Splitting {} using demucs".format(self.mp3_path))
+        os.system("demucs {} --two-stems vocals --mp3".format(self.mp3_path))
+        os.rename("/separated/htdemucs/vangelo/vocals.mp3", "/output/vocals.mp3 >/dev/null 2>&")
+        return "/output/vocals.mp3"
+

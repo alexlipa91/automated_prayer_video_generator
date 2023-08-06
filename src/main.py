@@ -5,57 +5,52 @@ import time
 import firebase_admin
 
 import uploader
-from audio import AudioDownloader
-from config import Config
+from audio import AudioDownloader, AudioProcessor
+from config import get_config
 from video import VideoDownloader, VideoComposer
-from datetime import datetime
 from firebase_admin import firestore
 
 
 def build_and_upload_audio_only():
-    date_param = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("DATE", None)
-
-    if not date_param:
-        date_param = datetime.now().strftime("%Y-%m-%d")
-
-    config = Config(date_param)
+    config = get_config()
+    print(config.__dict__)
 
     ad = AudioDownloader(config)
-    ad.run()
+    mp3_path = ad.download_audio()
+    transcript_path = ad.download_transcript()
 
-    vc = VideoComposer(config)
-    vc.run_audio_only()
+    vc = VideoComposer(config, mp3_path)
+    file_path = vc.run_audio_only()
 
-    video_id = uploader.upload_audio_only(config)
+    video_id = uploader.upload_audio_only(config, file_path, transcript_path)
 
     db = firestore.client()
-    db.collection('video_uploads').document(date_param).set({"audio_only_video_id": video_id})
+    db.collection('video_uploads').document(config.date).set({"audio_only_video_id": video_id})
 
 
 def build_and_upload():
     start = time.time()
-
-    date_param = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("DATE", None)
-
-    if not date_param:
-        date_param = datetime.now().strftime("%Y-%m-%d")
-
-    config = Config(date_param)
+    config = get_config()
+    print(config.__dict__)
 
     ad = AudioDownloader(config)
-    ad.run()
+    mp3_path = ad.download_audio()
+    transcript_path = ad.download_transcript()
 
-    vd = VideoDownloader(config)
+    ap = AudioProcessor(config, mp3_path)
+    vocals_mp3_path = ap.run()
+
+    vd = VideoDownloader(config, vocals_mp3_path)
     vd.run()
 
-    vc = VideoComposer(config)
-    vc.run()
-    vc.generate_preview_pope()
+    vc = VideoComposer(config, mp3_path)
+    file_path = vc.run()
+    preview_image_path = vc.generate_preview_pope()
 
-    uploader.upload(config)
+    video_id = uploader.upload(config, file_path, preview_image_path, transcript_path)
 
     end = time.time()
-    print("Done in {} seconds".format(end - start))
+    print("Done {} in {} seconds".format(video_id, end - start))
 
 
 if __name__ == '__main__':

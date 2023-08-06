@@ -21,27 +21,22 @@ HEIGHT = 1080
 
 class VideoDownloader:
 
-    def __init__(self, config):
+    def __init__(self, config, mp3_path):
         self.config = config
 
         self.videos = open('resources/videos.csv', 'r').readlines()
         random.shuffle(self.videos)
 
-        self.audio_duration = MP3("{}/vangelo.mp3".format(config.folder)).info.length
+        self.audio_duration = MP3(mp3_path).info.length
 
         self.index = 0
         self.duration = 0
-
-        try:
-            os.mkdir(config.folder)
-        except FileExistsError:
-            pass
 
     def download_video(self):
         url = self.videos[self.index]
         r = requests.get(url)
 
-        file_name = "{}/video_{}.mp4".format(self.config.folder, self.index)
+        file_name = "/output/video_{}.mp4".format(self.index)
         tmp_file_name = file_name + ".tmp"
 
         with open(tmp_file_name, 'wb') as outfile:
@@ -98,16 +93,18 @@ def refresh_video_ids(definition="sd", size="small"):
 
 class VideoComposer:
 
-    def __init__(self, config):
+    def __init__(self, config, mp3_path, subs_path=None):
         self.config = config
+        self.mp3_path = mp3_path
+        self.subs_path = subs_path
 
-    def get_santo_del_giorno(self):
-        # todo finish
-        s = requests \
-            .get("https://www.santodelgiorno.it/santi.json?data={}-{}-{}".format(self.year, self.month, self.day)) \
-            .json()
-        for x in s:
-            print(x["nome"])
+    # def get_santo_del_giorno(self):
+    #     # todo finish
+    #     s = requests \
+    #         .get("https://www.santodelgiorno.it/santi.json?data={}-{}-{}".format(self.year, self.month, self.day)) \
+    #         .json()
+    #     for x in s:
+    #         print(x["nome"])
 
     def generate_preview_pope(self):
         from PIL import ImageDraw, Image, ImageFont
@@ -128,7 +125,9 @@ class VideoComposer:
                        fill=(255, 255, 255), align="center", anchor="ms",
                        font=ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 70))
 
-        img.save("{}/preview.jpeg".format(self.config.folder))
+        file_name = "/output/preview.jpeg"
+        img.save(file_name)
+        return file_name
 
     def get_date_string(self, date):
         months = {
@@ -152,20 +151,21 @@ class VideoComposer:
         print("composing video")
         subscribe_prompt_duration = 3
 
-        clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(self.config.folder))]
+        clips = [VideoFileClip(f) for f in glob.glob("output/video_*.mp4")]
         print("concatenating {} videos".format(len(clips)))
         video = concatenate_videoclips(clips, method="compose").set_start(subscribe_prompt_duration)
         parts.append(video)
 
         # audio
-        audio = CompositeAudioClip([mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))
+        audio = CompositeAudioClip([mp.AudioFileClip(self.mp3_path)
                                    .set_start(subscribe_prompt_duration)])
         if self.config.duration_seconds:
             audio = audio.set_duration(self.config.duration_seconds)
         print("audio duration {}".format(audio.duration))
 
         # subs
-        if self.find_subs() and os.environ.get("SKIP_SUBS", 0) == 0:
+        subs_path = self.find_subs()
+        if subs_path and not self.config.skip_subs:
             print("adding subs")
             parts.append(self.get_subs(video.size, subscribe_prompt_duration))
         else:
@@ -181,18 +181,18 @@ class VideoComposer:
         print("composed; final video size is {}".format(final_video.size))
         final_video \
             .subclip(0, audio.duration + subscribe_prompt_duration) \
-            .write_videofile("{}/final_video.mp4".format(self.config.folder),
-                             verbose=False, logger=None)
+            .write_videofile("/output/final_video.mp4", verbose=False, logger=None)
 
     def run_audio_only(self):
-        audio = CompositeAudioClip([mp.AudioFileClip("{}/vangelo.mp3".format(self.config.folder))])
+        audio = CompositeAudioClip([mp.AudioFileClip(self.mp3_path)])
+        file_name = "/output/final_video_audio_only.mp4"
         ColorClip((200, 200), (0, 0, 0), duration=audio.duration)\
             .set_audio(audio)\
-            .write_videofile("{}/final_video_audio_only.mp4".format(self.config.folder),
-                             verbose=False, logger=None, fps=24)
+            .write_videofile(file_name, verbose=False, logger=None, fps=24)
+        return file_name
 
-    def get_subs(self, video_clip_size, start_seconds):
-        subtitles = SubtitlesClip("{}/vangelo.srt".format(self.config.folder),
+    def get_subs(self, subs_path, video_clip_size, start_seconds):
+        subtitles = SubtitlesClip(subs_path,
                                   lambda txt: TextClip(txt,
                                                        font='Tahoma-bold',
                                                        method="caption",
@@ -214,12 +214,13 @@ class VideoComposer:
 
             transcript_id = find_transcript_auto_synced(audio_only_video_id)
             if transcript_id:
-                download_transcript_srt(transcript_id, "{}/vangelo.srt".format(self.config.folder))
+                file_name = "/output/vangelo.srt"
+                download_transcript_srt(transcript_id, file_name)
                 print("downloading transcript")
-                return True
-            return False
+                return file_name
+            return None
         except Exception:
             print("error when looking for subs")
             traceback.print_exc()
-            return False
+            return None
 

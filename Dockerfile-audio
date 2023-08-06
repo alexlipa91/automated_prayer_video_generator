@@ -1,0 +1,5 @@
+FROM xserrat/facebook-demucs
+
+VOLUME input
+
+ENTRYPOINT ["pip3", "list"]
