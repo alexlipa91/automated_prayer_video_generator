@@ -5,7 +5,7 @@ from datetime import datetime
 
 class Config:
 
-    def __init__(self, date, duration_seconds=None):
+    def __init__(self, date):
         self.date = date
         param_tokens = date.split("-")
         self.year = str(param_tokens[0]).zfill(2)
@@ -13,7 +13,7 @@ class Config:
         self.day = str(param_tokens[2]).zfill(2)
 
         # if duration seconds is not specified, the audio duration will be used
-        self.duration_seconds = duration_seconds
+        self.duration_seconds = int(os.environ["DURATION_SECONDS"]) if "DURATION_SECONDS" in os.environ else None
         self.video_parts_max_length_seconds = 15
 
         self.save_local = int(os.environ.get("SAVE_LOCAL", 0)) == 1

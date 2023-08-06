@@ -3,6 +3,7 @@ import glob
 import traceback
 
 import requests as requests
+from moviepy.audio.fx.volumex import volumex
 from pexelsapi.pexels import Pexels
 import moviepy.editor as mp
 from moviepy.video.tools.subtitles import SubtitlesClip
@@ -95,6 +96,8 @@ class VideoComposer:
 
     def __init__(self, config, mp3_path, subs_path=None):
         self.config = config
+
+        self.background = "resources/scott-buckley-hiraeth.mp3"
         self.mp3_path = mp3_path
         self.subs_path = subs_path
 
@@ -157,8 +160,9 @@ class VideoComposer:
         parts.append(video)
 
         # audio
-        audio = CompositeAudioClip([mp.AudioFileClip(self.mp3_path)
-                                   .set_start(subscribe_prompt_duration)])
+        audio = CompositeAudioClip([
+            mp.AudioFileClip(self.background).fx(volumex, 0.05),
+            mp.AudioFileClip(self.mp3_path).set_start(subscribe_prompt_duration)])
         if self.config.duration_seconds:
             audio = audio.set_duration(self.config.duration_seconds)
         print("audio duration {}".format(audio.duration))
