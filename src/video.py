@@ -67,7 +67,7 @@ class VideoDownloader:
             try:
                 self.download_video()
             except Exception:
-                print("failed video download...skipping it")
+                print("failed video download {}...skipping it".format(self.index))
                 # traceback.print_exc()
 
 
@@ -182,10 +182,12 @@ class VideoComposer:
 
         final_video = CompositeVideoClip(parts).set_audio(audio)
 
-        print("composed; final video size is {}".format(final_video.size))
+        file_path = "/output/final_video.mp4"
+        print("writing final video to {}; size is {}".format(file_path, final_video.size))
         final_video \
             .subclip(0, audio.duration + subscribe_prompt_duration) \
-            .write_videofile("/output/final_video.mp4", verbose=False, logger=None)
+            .write_videofile(file_path, verbose=False, logger=None)
+        return file_path
 
     def run_audio_only(self):
         audio = CompositeAudioClip([mp.AudioFileClip(self.mp3_path)])

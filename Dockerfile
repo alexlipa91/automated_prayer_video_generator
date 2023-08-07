@@ -16,6 +16,7 @@ RUN pip3 install -r requirements.txt
 
 COPY src /src
 COPY resources /resources
+RUN mkdir /output
 
 COPY credentials.json /credentials.json
 # ENV GOOGLE_APPLICATION_CREDENTIALS=/credentials.json

@@ -241,7 +241,7 @@ def upload(config, video_path, preview_path, transcript_path):
     source_url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html" \
         .format(config.year, config.month, config.day)
     title = "Vangelo del Giorno: {}".format(date_string)
-    description = "Vangelo e letture del giorno, con commento del Santo Padre\n\nOfferto da: {}".format(source_url)
+    description = "Vangelo e letture del giorno, con commento del Santo Padre\n\nOfferto da: {}\nMusica di Scott Buckley, Hiraeth".format(source_url)
     category = "22"
     tags = ["vangelo", "preghiere", "chiesa", "gesù", "bibbia", "vaticano", "papa"]
     privacy_status = "public"
