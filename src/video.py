@@ -171,7 +171,7 @@ class VideoComposer:
         subs_path = self.find_subs()
         if subs_path and not self.config.skip_subs:
             print("adding subs")
-            parts.append(self.get_subs(video.size, subscribe_prompt_duration))
+            parts.append(self.get_subs(self.subs_path, video.size, subscribe_prompt_duration))
         else:
             print("skipping subs")
 
