@@ -94,12 +94,11 @@ def refresh_video_ids(definition="sd", size="small"):
 
 class VideoComposer:
 
-    def __init__(self, config, mp3_path, subs_path=None):
+    def __init__(self, config, mp3_path):
         self.config = config
 
         self.background = "resources/scott-buckley-hiraeth.mp3"
         self.mp3_path = mp3_path
-        self.subs_path = subs_path
 
     # def get_santo_del_giorno(self):
     #     # todo finish
@@ -160,9 +159,10 @@ class VideoComposer:
         parts.append(video)
 
         # audio
-        audio = CompositeAudioClip([
-            mp.AudioFileClip(self.background).fx(volumex, 0.05),
-            mp.AudioFileClip(self.mp3_path).set_start(subscribe_prompt_duration)])
+        audio_parts = [mp.AudioFileClip(self.mp3_path).set_start(subscribe_prompt_duration)]
+        if self.config.with_background_music:
+            audio_parts.append(mp.AudioFileClip(self.background).fx(volumex, 0.05))
+        audio = CompositeAudioClip(audio_parts)
         if self.config.duration_seconds:
             audio = audio.set_duration(self.config.duration_seconds)
         print("audio duration {}".format(audio.duration))
@@ -171,7 +171,7 @@ class VideoComposer:
         subs_path = self.find_subs()
         if subs_path and not self.config.skip_subs:
             print("adding subs")
-            parts.append(self.get_subs(self.subs_path, video.size, subscribe_prompt_duration))
+            parts.append(self.get_subs(subs_path, video.size, subscribe_prompt_duration))
         else:
             print("skipping subs")
 

@@ -18,6 +18,7 @@ class Config:
 
         self.save_local = int(os.environ.get("SAVE_LOCAL", 0)) == 1
         self.skip_subs = int(os.environ.get("SKIP_SUBS", 0)) == 1
+        self.with_background_music = int(os.environ.get("WITH_BACKGROUND_MUSIC", 0)) == 1
 
 
 def get_config():
