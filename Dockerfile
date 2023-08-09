@@ -19,9 +19,6 @@ COPY resources /resources
 RUN mkdir /output
 
 COPY credentials.json /credentials.json
-# ENV GOOGLE_APPLICATION_CREDENTIALS=/credentials.json
-# COPY credentials.storage /credentials.storage
-# ENV CREDENTIALS_FILE=/credentials.storage
 
 RUN mv /etc/ImageMagick-6/policy.xml /etc/ImageMagick-6/policy.xml.bkp
 RUN grep -v pattern="@*" /etc/ImageMagick-6/policy.xml.bkp > /etc/ImageMagick-6/policy.xml

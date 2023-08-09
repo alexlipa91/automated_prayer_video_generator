@@ -170,7 +170,7 @@ class VideoComposer:
         # subs
         subs_path = self.find_subs()
         if subs_path and not self.config.skip_subs:
-            print("adding subs")
+            print("adding subs {}".format(subs_path))
             parts.append(self.get_subs(subs_path, video.size, subscribe_prompt_duration))
         else:
             print("skipping subs")
@@ -200,7 +200,7 @@ class VideoComposer:
     def get_subs(self, subs_path, video_clip_size, start_seconds):
         subtitles = SubtitlesClip(subs_path,
                                   lambda txt: TextClip(txt,
-                                                       font='Tahoma-bold',
+                                                       # font='Tahoma-bold',
                                                        method="caption",
                                                        size=video_clip_size,
                                                        fontsize=48,
