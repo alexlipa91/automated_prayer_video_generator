@@ -200,7 +200,7 @@ class VideoComposer:
     def get_subs(self, subs_path, video_clip_size, start_seconds):
         subtitles = SubtitlesClip(subs_path,
                                   lambda txt: TextClip(txt,
-                                                       # font='Tahoma-bold',
+                                                       font='DejaVu-Sans',
                                                        method="caption",
                                                        size=video_clip_size,
                                                        fontsize=48,
