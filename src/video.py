@@ -14,6 +14,7 @@ import csv
 
 from firebase_admin import firestore
 
+from src.config import Config
 from uploader import find_transcript_auto_synced, download_transcript_srt
 
 WIDTH = 1920
@@ -111,8 +112,10 @@ class VideoComposer:
     def generate_preview_pope(self):
         from PIL import ImageDraw, Image, ImageFont
 
-        img = Image.open('resources/pope_empty.jpeg')
+        img = Image.open('resources/previews/1.png')
+
         final_img = ImageDraw.Draw(img)
+        final_img.resize((1024, 1024), Image.BOX)
         w, h = img.size
         font_main = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 100)
         font_small = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 40)
@@ -130,6 +133,9 @@ class VideoComposer:
         file_name = "/output/preview.jpeg"
         img.save(file_name)
         return file_name
+
+    def get_preview_image(self):
+        return 'resources/previews/{}.png'.format(str(self.config.day % 3))
 
     def get_date_string(self, date):
         months = {
@@ -230,3 +236,6 @@ class VideoComposer:
             traceback.print_exc()
             return None
 
+
+if __name__ == '__main__':
+    VideoComposer(config=Config("2023-08-08"), mp3_path=None).generate_preview_pope()

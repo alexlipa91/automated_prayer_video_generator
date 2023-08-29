@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 
 import firebase_admin
@@ -45,7 +44,7 @@ def build_and_upload():
 
     vc = VideoComposer(config, vocals_mp3_path)
     file_path = vc.run()
-    preview_image_path = vc.generate_preview_pope()
+    preview_image_path = vc.get_preview_image()
 
     video_id = uploader.upload(config, file_path, preview_image_path, transcript_path)
 
