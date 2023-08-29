@@ -14,7 +14,6 @@ import csv
 
 from firebase_admin import firestore
 
-from src.config import Config
 from uploader import find_transcript_auto_synced, download_transcript_srt
 
 WIDTH = 1920
@@ -235,7 +234,3 @@ class VideoComposer:
             print("error when looking for subs")
             traceback.print_exc()
             return None
-
-
-if __name__ == '__main__':
-    VideoComposer(config=Config("2023-08-08"), mp3_path=None).generate_preview_pope()
