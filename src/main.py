@@ -24,7 +24,7 @@ def build_and_upload_audio_only():
     video_id = uploader.upload_audio_only(config, file_path, transcript_path)
 
     db = firestore.client()
-    db.collection('video_uploads').document(config.date).set({"audio_only_video_id": video_id})
+    db.collection('video_uploads').document(config.date).set({"audio_only_video_id": video_id}, merge=True)
 
 
 def build_and_upload():
@@ -47,6 +47,9 @@ def build_and_upload():
     preview_image_path = vc.get_preview_image()
 
     video_id = uploader.upload(config, file_path, preview_image_path, transcript_path)
+
+    db = firestore.client()
+    db.collection('video_uploads').document(config.date).set({"video_id": video_id}, merge=True)
 
     end = time.time()
     print("Done {} in {} seconds".format(video_id, end - start))
