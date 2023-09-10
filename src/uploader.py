@@ -9,6 +9,7 @@ import datetime
 import io
 import os
 import sys
+import traceback
 from http import client
 import httplib2
 import random
@@ -186,20 +187,30 @@ def add_to_playlist(youtube, video_id):
 
 
 def add_transcript(youtube, video_id, transcript_file_path):
-    req = youtube.captions().insert(
-        part="snippet",
-        body=dict(
-            snippet=dict(
-                videoId=video_id,
-                language="it",
-                name="Trascrizione",
-                isDraft=False
-            )
-        ),
-        media_body=MediaFileUpload(transcript_file_path)
-    )
-    response = req.execute()
-    print(response)
+    i = 0
+    while i < 3:
+        print("sending request to upload transcript {} to video {}".format(transcript_file_path, video_id))
+        req = youtube.captions().insert(
+            part="snippet",
+            body=dict(
+                snippet=dict(
+                    videoId=video_id,
+                    language="it",
+                    name="Trascrizione",
+                    isDraft=False
+                )
+            ),
+            media_body=MediaFileUpload(transcript_file_path)
+        )
+        try:
+            response = req.execute()
+            print(response)
+            return
+        except:
+            print("there was an error uploading the transcript...retrying")
+            print(traceback.format_exc())
+            i = i + 1
+    print("finished retries")
 
 
 def download_transcript_srt(caption_id, file_path):
