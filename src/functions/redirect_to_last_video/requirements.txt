@@ -1,0 +1,3 @@
+functions-framework==3.*
+datetime
+firebase_admin==5.2.0

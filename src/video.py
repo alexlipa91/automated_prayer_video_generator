@@ -133,8 +133,9 @@ class VideoComposer:
         img.save(file_name)
         return file_name
 
-    def get_preview_image(self):
-        return 'resources/previews/{}.png'.format(str(self.config.day % 3))
+    @staticmethod
+    def get_preview_image():
+        return 'resources/previews/0.png'
 
     def get_date_string(self, date):
         months = {
