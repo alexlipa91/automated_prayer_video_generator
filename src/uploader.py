@@ -169,12 +169,12 @@ def set_thumbnail(youtube, video_id, thumbnail_file):
     print(response)
 
 
-def add_to_playlist(youtube, video_id):
+def add_to_playlist(youtube, video_id, playlist_id="PLYFkvAawma-XL1-y8nZU3tLf9WTKnI11m"):
     add_video_request = youtube.playlistItems().insert(
         part="snippet",
         body={
             'snippet': {
-                'playlistId': "PLYFkvAawma-XL1-y8nZU3tLf9WTKnI11m",
+                'playlistId': playlist_id,
                 'resourceId': {
                     'kind': 'youtube#video',
                     'videoId': video_id
@@ -265,8 +265,28 @@ def upload(config, video_path, preview_path, transcript_path):
     return video_id
 
 
+def upload_es(config, video_path, preview_path, transcript_path):
+    if config.save_local == 1:
+        return
+    date_string = datetime.datetime(year=int(config.year),
+                                    month=int(config.month),
+                                    day=int(config.day)).strftime("%d xxxx %Y") \
+        .replace("xxxx", get_month_name_es(int(config.month)))
+    title = "Evangelio de Hoy: {}".format(date_string)
+    description = "Evangelio y lecturas del dia"
+    category = "22"
+    tags = ["evangelio", "oración", "iglesia", "gesù", "biblia", "vaticano", "papa"]
+    privacy_status = "public"
+
+    youtube = get_authenticated_service()
+    video_id = initialize_upload(youtube, video_path, preview_path, title, description, category, tags, privacy_status)
+    set_thumbnail(youtube, video_id, preview_path)
+    add_to_playlist(youtube, video_id, playlist_id="PLYFkvAawma-UGoEyPMwnsmzJtYut-wie7")
+    add_transcript(youtube, video_id, transcript_path)
+    return video_id
+
+
 def get_month_name(m):
-    print(m)
     if m == 1:
         return "Gennaio"
     if m == 2:
@@ -291,6 +311,34 @@ def get_month_name(m):
         return "Novembre"
     if m == 12:
         return "Dicembre"
+    return ""
+
+
+def get_month_name_es(m):
+    if m == 1:
+        return "Enero"
+    if m == 2:
+        return "Febrero"
+    if m == 3:
+        return "Marzo"
+    if m == 4:
+        return "Abril"
+    if m == 5:
+        return "Mayo"
+    if m == 6:
+        return "Junio"
+    if m == 7:
+        return "Julio"
+    if m == 8:
+        return "Agosto"
+    if m == 9:
+        return "Septiembre"
+    if m == 10:
+        return "Octubre"
+    if m == 11:
+        return "Noviembre"
+    if m == 12:
+        return "Diciembre"
     return ""
 
 

@@ -133,9 +133,10 @@ class VideoComposer:
         img.save(file_name)
         return file_name
 
-    @staticmethod
-    def get_preview_image():
-        return 'resources/previews/0.png'
+    def get_preview_image(self):
+        if self.config.language == "it":
+            return 'resources/previews/0.png'
+        return 'resources/previews/1.png'
 
     def get_date_string(self, date):
         months = {
@@ -174,12 +175,15 @@ class VideoComposer:
         print("audio duration {}".format(audio.duration))
 
         # subs
-        subs_path = self.find_subs()
-        if subs_path and not self.config.skip_subs:
-            print("adding subs {}".format(subs_path))
-            parts.append(self.get_subs(subs_path, video.size, subscribe_prompt_duration))
-        else:
+        if self.config.skip_subs:
             print("skipping subs")
+        else:
+            subs_path = self.find_subs()
+            if subs_path:
+                print("adding subs {}".format(subs_path))
+                parts.append(self.get_subs(subs_path, video.size, subscribe_prompt_duration))
+            else:
+                print("subs not found...skipping")
 
         # subscribe prompt
         parts.append(ImageClip("resources/pope_subscribe.jpeg").set_start(0)

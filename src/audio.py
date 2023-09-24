@@ -3,7 +3,7 @@ import os
 import requests as requests
 import srt as srt
 from bs4 import BeautifulSoup
-from config import get_config
+from config import Config
 
 
 class AudioDownloader:
@@ -12,7 +12,9 @@ class AudioDownloader:
         self.config = config
 
         self.source_url = "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}/{}/{}.html" \
-            .format(config.year, config.month, config.day)
+            .format(config.year, config.month, config.day) if self.config.language == "it" else \
+            "https://www.vaticannews.va/es/evangelio-de-hoy/{}/{}/{}.html"\
+                .format(config.year, config.month, config.day)
 
     def download_audio(self):
         print("downloading audio from {}".format(self.source_url))
@@ -72,7 +74,8 @@ class AudioDownloader:
 
         self.write_srt(subs)
 
-    def write_srt(self, subs):
+    @staticmethod
+    def write_srt(subs):
         srt_file = "/output/vangelo.srt"
         print("Writing subtitles to {}".format(srt_file))
         f = open(srt_file, 'w')
@@ -80,7 +83,8 @@ class AudioDownloader:
         f.close()
 
     def download_transcript(self):
-        print("downloading transcript from {}".format(self.source_url))
+        file_path = "{}/transcript.txt".format(self.config.output_root)
+        print("downloading transcript from {} to {}".format(self.source_url, file_path))
         req = requests.get(self.source_url)
         soup = BeautifulSoup(req.content, "html.parser")
 
@@ -88,17 +92,51 @@ class AudioDownloader:
 
         content = soup.findAll('div', attrs={"class": "section__content"})
         for x in content:
+            print("new x")
             for p in x.findAll("p"):
+                print(p)
                 final_text = final_text + p.getText() + " "
 
         splitted = final_text.split()
         final_text_in_lines = [' '.join(splitted[i: i + 10]) for i in range(0, len(splitted), 10)]
 
-        file_path = "/output/transcript.txt"
         with open(file_path, "w") as text_file:
             text_file.write('\n'.join(final_text_in_lines))
 
         return file_path
+
+    def download_transcript_in_multiple_files(self):
+        file_path_format = "{}/transcript_<id>.txt".format(self.config.output_root)
+        print("downloading transcript in multiple files from {} to {}".format(self.source_url, file_path_format))
+        req = requests.get(self.source_url)
+        soup = BeautifulSoup(req.content, "html.parser")
+
+        content = soup.findAll('div', attrs={"class": "section__content"})
+
+        # write full file for subs
+        full_transcript = ""
+
+        id = 0
+        file_paths = []
+        for x in content:
+            final_text = ""
+            for p in x.findAll("p"):
+                final_text = final_text + p.getText() + "\n"
+
+            file_path = file_path_format.replace("<id>", str(id))
+            with open(file_path, "w") as text_file:
+                text_file.write(final_text)
+
+            full_transcript = full_transcript + final_text + "\n"
+
+            id = id + 1
+            file_paths.append(file_path)
+
+        full_transcript_path = "{}/full_transcript.txt".format(self.config.output_root)
+        with open(full_transcript_path, "w") as text_file:
+            text_file.write(full_transcript)
+
+        return file_paths, full_transcript_path
 
 
 class AudioProcessor:
@@ -113,3 +151,9 @@ class AudioProcessor:
         os.system("demucs {} --out /output --two-stems vocals --mp3 >/dev/null 2>&1".format(self.mp3_path))
         return "/output/htdemucs/vangelo/vocals.mp3"
 
+
+if __name__ == '__main__':
+    ad = AudioDownloader(config=Config(date="2023-09-22", output_root="./tmp", language="es"))
+    ad.download_transcript_in_multiple_files()
+
+    #http://usitep.es/apf/reli/citas_biblicas/LIBROSconABREVIATURA.htm

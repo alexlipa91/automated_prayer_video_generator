@@ -5,8 +5,9 @@ from datetime import datetime
 
 class Config:
 
-    def __init__(self, date):
+    def __init__(self, date, language="it", output_root="/output"):
         self.date = date
+        self.language = language
         param_tokens = date.split("-")
         self.year = str(param_tokens[0]).zfill(2)
         self.month = str(param_tokens[1]).zfill(2)
@@ -20,12 +21,14 @@ class Config:
         self.skip_subs = int(os.environ.get("SKIP_SUBS", 0)) == 1
         self.with_background_music = int(os.environ.get("WITH_BACKGROUND_MUSIC", 0)) == 1
 
+        self.output_root = output_root
 
-def get_config():
+
+def get_config(language="it"):
     date_param = sys.argv[1] if len(sys.argv) > 1 else os.environ.get("DATE", None)
 
     if not date_param:
         date_param = datetime.now().strftime("%Y-%m-%d")
 
-    return Config(date_param)
+    return Config(date_param, language=language)
 
