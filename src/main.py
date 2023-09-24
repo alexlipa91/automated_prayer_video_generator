@@ -59,6 +59,7 @@ def build_and_upload():
 def build_and_upload_es():
     start = time.time()
     config = get_config(language="es")
+    config.skip_subs = True
     print(config.__dict__)
 
     ad = AudioDownloader(config)
