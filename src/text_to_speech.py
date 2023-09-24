@@ -6,26 +6,24 @@ Note: ssml must be well-formed according to:
 """
 from google.cloud import texttospeech
 
-from config import Config
-
 
 class TextToSpeech:
 
-    def __init__(self, config, files):
+    def __init__(self, config, ssml):
         self.config = config
         self.client = texttospeech.TextToSpeechClient()
-        self.files = files
+        self.ssml = ssml
 
     def translate_file(self):
-        synthesis_input = texttospeech.SynthesisInput(ssml=self.create_ssml())
+        synthesis_input = texttospeech.SynthesisInput(ssml=self.ssml)
         voice = texttospeech.VoiceSelectionParams(
             language_code="es-US",
             name="es-US-Neural2-B"
         )
         audio_config = texttospeech.AudioConfig(
             audio_encoding=texttospeech.AudioEncoding.MP3,
-            speaking_rate=0.9,
-            pitch=-1.5
+            speaking_rate=0.75,
+            pitch=-5.5
         )
         response = self.client.synthesize_speech(
             input=synthesis_input, voice=voice, audio_config=audio_config
@@ -39,20 +37,3 @@ class TextToSpeech:
             print('Audio content written to file {}'.format(mp3_path))
         return mp3_path
 
-    def create_ssml(self):
-        file_ssml = []
-        for file in self.files:
-            lines = []
-            with open(file, "r") as f:
-                lines = f.readlines()
-            file_ssml.append("""{}<break time="2s"/>{}""".format(lines[0], lines[2]))
-
-        ssml = """<speak>{}<break time="5s"/>{}</speak>""".format(file_ssml[0], file_ssml[1])
-
-        return ssml
-
-
-if __name__ == '__main__':
-    t = TextToSpeech(config=Config(date="2023-09-23", output_root="./tmp"),
-                     files=["./tmp/transcript_0.txt", "./tmp/transcript_1.txt"])
-    t.translate_file()

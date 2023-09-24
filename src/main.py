@@ -63,11 +63,10 @@ def build_and_upload_es():
     print(config.__dict__)
 
     ad = AudioDownloader(config)
-    transcript_paths, full_transcript_path = ad.download_transcript_in_multiple_files()
+    ssml, full_transcript_path = ad.download_transcript_in_ssml()
 
     # get only the evangelio for now
-    files = [transcript_paths[1]]
-    t = TextToSpeech(config=config, files=files)
+    t = TextToSpeech(config=config, ssml=ssml)
     mp3_path = t.translate_file()
 
     vd = VideoDownloader(config, mp3_path)

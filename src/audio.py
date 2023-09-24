@@ -105,9 +105,9 @@ class AudioDownloader:
 
         return file_path
 
-    def download_transcript_in_multiple_files(self):
+    def download_transcript_in_ssml(self):
         file_path_format = "{}/transcript_<id>.txt".format(self.config.output_root)
-        print("downloading transcript in multiple files from {} to {}".format(self.source_url, file_path_format))
+        print("downloading transcript from {}".format(self.source_url))
         req = requests.get(self.source_url)
         soup = BeautifulSoup(req.content, "html.parser")
 
@@ -115,28 +115,30 @@ class AudioDownloader:
 
         # write full file for subs
         full_transcript = ""
+        ssml = "<speak>"
 
-        id = 0
-        file_paths = []
-        for x in content:
-            final_text = ""
-            for p in x.findAll("p"):
-                final_text = final_text + p.getText() + "\n"
+        # 0 = lecturas, 1 evangelio, 2 pope
+        keep_only_indexes = [1]
 
-            file_path = file_path_format.replace("<id>", str(id))
-            with open(file_path, "w") as text_file:
-                text_file.write(final_text)
+        for i, x in enumerate(content):
+            if i in keep_only_indexes:
+                final_text = ""
+                for j, p in enumerate(x.findAll("p")):
+                    if i == 1 and j == 1:
+                        # todo figure out how to include this part http://usitep.es/apf/reli/citas_biblicas/LIBROSconABREVIATURA.htm
+                        continue
+                    ssml = ssml + p.getText() + """<break time="2s"/>"""
+                    final_text = final_text + p.getText() + "\n"
 
-            full_transcript = full_transcript + final_text + "\n"
-
-            id = id + 1
-            file_paths.append(file_path)
+                full_transcript = full_transcript + final_text + "\n"
 
         full_transcript_path = "{}/full_transcript.txt".format(self.config.output_root)
         with open(full_transcript_path, "w") as text_file:
             text_file.write(full_transcript)
 
-        return file_paths, full_transcript_path
+        ssml = ssml + "</speak>"
+
+        return ssml, full_transcript_path
 
 
 class AudioProcessor:
@@ -153,7 +155,5 @@ class AudioProcessor:
 
 
 if __name__ == '__main__':
-    ad = AudioDownloader(config=Config(date="2023-09-22", output_root="./tmp", language="es"))
-    ad.download_transcript_in_multiple_files()
-
-    #http://usitep.es/apf/reli/citas_biblicas/LIBROSconABREVIATURA.htm
+    ad = AudioDownloader(config=Config(date="2023-09-24", output_root="./tmp", language="es"))
+    print(ad.download_transcript_in_ssml()[0])

@@ -186,7 +186,7 @@ class VideoComposer:
                 print("subs not found...skipping")
 
         # subscribe prompt
-        parts.append(ImageClip("resources/pope_subscribe.jpeg").set_start(0)
+        parts.append(ImageClip("resources/pope_subscribe_{}.jpeg".format(self.config.language)).set_start(0)
                      .set_duration(subscribe_prompt_duration)
                      .resize((WIDTH, HEIGHT)))
 
