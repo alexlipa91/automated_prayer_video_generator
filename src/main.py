@@ -65,8 +65,9 @@ def build_and_upload_es():
     ad = AudioDownloader(config)
     transcript_paths, full_transcript_path = ad.download_transcript_in_multiple_files()
 
-    # skip the last part for now
-    t = TextToSpeech(config=config, files=transcript_paths[:2])
+    # get only the evangelio for now
+    files = [transcript_paths[1]]
+    t = TextToSpeech(config=config, files=files)
     mp3_path = t.translate_file()
 
     vd = VideoDownloader(config, mp3_path)
