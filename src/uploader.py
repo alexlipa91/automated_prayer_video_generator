@@ -186,7 +186,7 @@ def add_to_playlist(youtube, video_id, playlist_id="PLYFkvAawma-XL1-y8nZU3tLf9WT
     print(response)
 
 
-def add_transcript(youtube, video_id, transcript_file_path):
+def add_transcript(youtube, video_id, transcript_file_path, language="it"):
     i = 0
     while i < 3:
         print("sending request to upload transcript {} to video {}".format(transcript_file_path, video_id))
@@ -195,7 +195,7 @@ def add_transcript(youtube, video_id, transcript_file_path):
             body=dict(
                 snippet=dict(
                     videoId=video_id,
-                    language="it",
+                    language=language,
                     name="Trascrizione",
                     isDraft=False
                 )
@@ -282,7 +282,7 @@ def upload_es(config, video_path, preview_path, transcript_path):
     video_id = initialize_upload(youtube, video_path, preview_path, title, description, category, tags, privacy_status)
     set_thumbnail(youtube, video_id, preview_path)
     add_to_playlist(youtube, video_id, playlist_id="PLYFkvAawma-UGoEyPMwnsmzJtYut-wie7")
-    add_transcript(youtube, video_id, transcript_path)
+    add_transcript(youtube, video_id, transcript_path, language="es")
     return video_id
 
 
