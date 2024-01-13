@@ -136,7 +136,7 @@ class VideoComposer:
     def get_preview_image(self):
         if self.config.language == "it":
             return 'resources/previews/0.png'
-        return 'resources/previews/1.png'
+        return 'resources/previews/es.jpg'
 
     def get_date_string(self, date):
         months = {
