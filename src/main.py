@@ -1,3 +1,4 @@
+import datetime
 import os
 import time
 
@@ -85,10 +86,21 @@ def build_and_upload_es():
     print("Done {} in {} seconds".format(video_id, end - start))
 
 
+def cleanup():
+    date_to_clean = (datetime.datetime.now() - datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+    db = firestore.client()
+
+    video_id = db.collection("video_uploads").document(date_to_clean).get().to_dict()["audio_only_video_id"]
+    uploader.delete(video_id)
+
+    db.collection("video_uploads").document(date_to_clean).delete()
+
+
 if __name__ == '__main__':
     firebase_admin.initialize_app()
-
-    if os.environ.get("AUDIO_ONLY", "0") == "1":
+    if os.environ.get("CLEANUP", "0") == "1":
+        cleanup()
+    elif os.environ.get("AUDIO_ONLY", "0") == "1":
         build_and_upload_audio_only()
     elif os.environ.get("LANGUAGE", "IT") == "ES":
         build_and_upload_es()
