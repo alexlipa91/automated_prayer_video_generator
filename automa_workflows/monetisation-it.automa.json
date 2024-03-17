@@ -1,12 +1,13 @@
 {
   "extVersion": "1.28.27",
-  "name": "monetisation-es",
+  "name": "monetisation-it",
   "icon": "riGlobalLine",
   "table": [],
   "version": "1.28.26",
   "drawflow": {
     "edges": [
       {
+        "class": "connected-edges",
         "data": {},
         "events": {},
         "id": "vueflow__edge-fqExMSf9TtzP6ohp5kcYAfqExMSf9TtzP6ohp5kcYA-output-1-wxdlw6xwxdlw6x-input-1",
@@ -14,46 +15,29 @@
         "selectable": true,
         "source": "fqExMSf9TtzP6ohp5kcYA",
         "sourceHandle": "fqExMSf9TtzP6ohp5kcYA-output-1",
-        "sourceX": 313,
+        "sourceX": 312,
         "sourceY": 284,
         "target": "wxdlw6x",
         "targetHandle": "wxdlw6x-input-1",
-        "targetX": 394,
-        "targetY": 214,
+        "targetX": 507,
+        "targetY": 302,
         "type": "custom",
         "updatable": true
       },
       {
         "data": {},
         "events": {},
-        "id": "vueflow__edge-wxdlw6xwxdlw6x-output-1-ha9ns8eha9ns8e-input-1",
+        "id": "vueflow__edge-wxdlw6xwxdlw6x-output-1-wp14zmwwp14zmw-input-1",
         "markerEnd": "arrowclosed",
         "selectable": true,
         "source": "wxdlw6x",
         "sourceHandle": "wxdlw6x-output-1",
-        "sourceX": 626,
-        "sourceY": 214,
-        "target": "ha9ns8e",
-        "targetHandle": "ha9ns8e-input-1",
-        "targetX": 749,
-        "targetY": 232.5859375,
-        "type": "custom",
-        "updatable": true
-      },
-      {
-        "data": {},
-        "events": {},
-        "id": "vueflow__edge-ha9ns8eha9ns8e-output-1-wp14zmwwp14zmw-input-1",
-        "markerEnd": "arrowclosed",
-        "selectable": true,
-        "source": "ha9ns8e",
-        "sourceHandle": "ha9ns8e-output-1",
-        "sourceX": 981,
-        "sourceY": 232.5859375,
+        "sourceX": 739,
+        "sourceY": 302,
         "target": "wp14zmw",
         "targetHandle": "wp14zmw-input-1",
-        "targetX": 943,
-        "targetY": 523,
+        "targetX": 903,
+        "targetY": 329,
         "type": "custom",
         "updatable": true
       }
@@ -138,7 +122,7 @@
             },
             {
               "data": {
-                "expression": "30 8 * * *"
+                "expression": "30 5 * * *"
               },
               "id": "CI0-z",
               "type": "cron-job"
@@ -151,7 +135,7 @@
         "id": "fqExMSf9TtzP6ohp5kcYA",
         "label": "trigger",
         "position": {
-          "x": 101,
+          "x": 100,
           "y": 248
         },
         "type": "BlockBasic"
@@ -165,7 +149,7 @@
           "inGroup": false,
           "tabZoom": 1,
           "updatePrevTab": false,
-          "url": "https://europe-west4-prayers-channel-369405.cloudfunctions.net/redirect_to_today_video?lang=es",
+          "url": "https://europe-west4-prayers-channel-369405.cloudfunctions.net/redirect_to_today_video",
           "userAgent": "",
           "waitTabLoaded": false
         },
@@ -173,8 +157,8 @@
         "id": "wxdlw6x",
         "label": "new-tab",
         "position": {
-          "x": 414,
-          "y": 178
+          "x": 527,
+          "y": 266
         },
         "type": "BlockBasic"
       },
@@ -184,36 +168,18 @@
           "disableBlock": false,
           "executeId": "",
           "globalData": "",
-          "insertAllGlobalData": true,
+          "insertAllGlobalData": false,
           "insertAllVars": false,
-          "settings": {
-            "blockTimeout": 0,
-            "debugMode": false
-          },
           "workflowId": "UpZhuOZRaXp5BZ__a5dkQ"
         },
         "events": {},
         "id": "wp14zmw",
         "label": "execute-workflow",
         "position": {
-          "x": 963,
-          "y": 487
+          "x": 923,
+          "y": 293
         },
         "type": "BlockBasic"
-      },
-      {
-        "data": {
-          "disableBlock": false,
-          "time": "1000"
-        },
-        "events": {},
-        "id": "ha9ns8e",
-        "label": "delay",
-        "position": {
-          "x": 769,
-          "y": 174
-        },
-        "type": "BlockDelay"
       }
     ],
     "position": [
