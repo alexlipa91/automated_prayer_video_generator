@@ -19,6 +19,8 @@ from uploader import find_transcript_auto_synced, download_transcript_srt
 WIDTH = 1920
 HEIGHT = 1080
 
+BASE_PATH = "output"
+
 
 class VideoDownloader:
 
@@ -34,10 +36,14 @@ class VideoDownloader:
         self.duration = 0
 
     def download_video(self):
-        url = self.videos[self.index]
+        url = self.videos[self.index].strip()
         r = requests.get(url)
 
-        file_name = "/output/video_{}.mp4".format(self.index)
+        if r.status_code > 201:
+            print(r.text)
+            raise Exception("Download request failed with status code {}".format(r.status_code))
+
+        file_name = "{}/video_{}.mp4".format(BASE_PATH, self.index)
         tmp_file_name = file_name + ".tmp"
 
         with open(tmp_file_name, 'wb') as outfile:
@@ -129,7 +135,7 @@ class VideoComposer:
                        fill=(255, 255, 255), align="center", anchor="ms",
                        font=ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 70))
 
-        file_name = "/output/preview.jpeg"
+        file_name = "{}/preview.jpeg".format(BASE_PATH)
         img.save(file_name)
         return file_name
 
@@ -160,7 +166,7 @@ class VideoComposer:
         print("composing video")
         subscribe_prompt_duration = 3
 
-        clips = [VideoFileClip(f) for f in glob.glob("output/video_*.mp4")]
+        clips = [VideoFileClip(f) for f in glob.glob("{}/video_*.mp4".format(BASE_PATH))]
         print("concatenating {} videos".format(len(clips)))
         video = concatenate_videoclips(clips, method="compose").set_start(subscribe_prompt_duration)
         parts.append(video)
@@ -192,7 +198,7 @@ class VideoComposer:
 
         final_video = CompositeVideoClip(parts).set_audio(audio)
 
-        file_path = "/output/final_video.mp4"
+        file_path = "{}/final_video.mp4".format(BASE_PATH)
         print("writing final video to {}; size is {}".format(file_path, final_video.size))
         final_video \
             .subclip(0, audio.duration + subscribe_prompt_duration) \
@@ -201,9 +207,9 @@ class VideoComposer:
 
     def run_audio_only(self):
         audio = CompositeAudioClip([mp.AudioFileClip(self.mp3_path)])
-        file_name = "/output/final_video_audio_only.mp4"
-        ColorClip((200, 200), (0, 0, 0), duration=audio.duration)\
-            .set_audio(audio)\
+        file_name = "{}/final_video_audio_only.mp4".format(BASE_PATH)
+        ColorClip((200, 200), (0, 0, 0), duration=audio.duration) \
+            .set_audio(audio) \
             .write_videofile(file_name, verbose=False, logger=None, fps=24)
         return file_name
 
@@ -217,20 +223,21 @@ class VideoComposer:
                                                        stroke_color="white",
                                                        stroke_width=3,
                                                        # transparent=False,
-                                                       color='white'))\
-            .set_start(start_seconds)\
+                                                       color='white')) \
+            .set_start(start_seconds) \
             .set_pos('center')
         return subtitles
 
     def find_subs(self):
         try:
             db = firestore.client()
-            audio_only_video_id = db.collection("video_uploads").document(self.config.date).get().to_dict()["audio_only_video_id"]
+            audio_only_video_id = db.collection("video_uploads").document(self.config.date).get().to_dict()[
+                "audio_only_video_id"]
             print("looking for subs from audio-only video {}".format(audio_only_video_id))
 
             transcript_id = find_transcript_auto_synced(audio_only_video_id)
             if transcript_id:
-                file_name = "/output/vangelo.srt"
+                file_name = "{}/vangelo.srt".format(BASE_PATH)
                 download_transcript_srt(transcript_id, file_name)
                 print("downloading transcript")
                 return file_name
@@ -239,3 +246,9 @@ class VideoComposer:
             print("error when looking for subs")
             traceback.print_exc()
             return None
+
+
+if __name__ == '__main__':
+    # refresh_video_ids()
+    d = VideoDownloader(None, None)
+    d.download_video()
