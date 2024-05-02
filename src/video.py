@@ -69,11 +69,15 @@ class VideoDownloader:
     def run(self):
         target_duration = self.audio_duration if self.config.duration_seconds is None else self.config.duration_seconds
 
+        iterations = 0
         while self.duration < target_duration:
             try:
                 self.download_video()
             except Exception:
                 print("failed video download {}...skipping it".format(self.index))
+            iterations = iterations + 1
+            if iterations >= 100:
+                raise Exception("Failed video download 100 times, breaking it")
                 # traceback.print_exc()
 
 
