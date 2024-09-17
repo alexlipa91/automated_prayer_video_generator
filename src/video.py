@@ -30,14 +30,15 @@ class VideoDownloader:
         self.videos = open('resources/videos.csv', 'r').readlines()
         random.shuffle(self.videos)
 
-        self.audio_duration = MP3(mp3_path).info.length
+        if mp3_path:
+            self.audio_duration = MP3(mp3_path).info.length
 
         self.index = 0
         self.duration = 0
 
     def download_video(self):
         url = self.videos[self.index].strip()
-        r = requests.get(url)
+        r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
 
         if r.status_code > 201:
             print(r.text)
