@@ -14,8 +14,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
-COPY src /src
-COPY resources /resources
+COPY video_generator/src /src
+COPY video_generator/resources /resources
 RUN mkdir /output
 
 COPY credentials.json /credentials.json
