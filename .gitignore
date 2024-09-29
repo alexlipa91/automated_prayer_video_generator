@@ -2,4 +2,4 @@ venv/*
 
 docker-output/*
 
-src/__pycache__
+video_generator/src/__pycache__
