@@ -15,6 +15,7 @@ import csv
 from firebase_admin import firestore
 
 from uploader import find_transcript_auto_synced, download_transcript_srt
+from util import get_date_string
 
 WIDTH = 1920
 HEIGHT = 1080
@@ -136,7 +137,7 @@ class VideoComposer:
                        fill=(255, 255, 255), align="center", anchor="ms", font=font_main)
         final_img.text((w / 3, h / 1.61), "con commento del\nSanto Padre",
                        fill=(255, 255, 255), align="center", anchor="ms", font=font_small)
-        final_img.text((w / 3, h / 1.16), "{}".format(self.get_date_string(date)),
+        final_img.text((w / 3, h / 1.16), "{}".format(get_date_string(date)),
                        fill=(255, 255, 255), align="center", anchor="ms",
                        font=ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 70))
 
@@ -148,23 +149,6 @@ class VideoComposer:
         if self.config.language == "it":
             return 'resources/previews/0.png'
         return 'resources/previews/es.jpg'
-
-    def get_date_string(self, date):
-        months = {
-            1: "Gennaio",
-            2: "Febbraio",
-            3: "Marzo",
-            4: "Aprile",
-            5: "Maggio",
-            6: "Giugno",
-            7: "Luglio",
-            8: "Agosto",
-            9: "Settembre",
-            10: "Ottobre",
-            11: "Novembre",
-            12: "Dicembre"
-        }
-        return "{} {} {}".format(date.day, months[date.month], date.year)
 
     def run(self):
         parts = []
