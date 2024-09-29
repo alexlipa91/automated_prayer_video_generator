@@ -14,6 +14,7 @@ import csv
 
 from firebase_admin import firestore
 
+from src.thumbnail import Thumbnail
 from uploader import find_transcript_auto_synced, download_transcript_srt
 from util import get_date_string
 
@@ -112,43 +113,10 @@ class VideoComposer:
         self.background = "resources/scott-buckley-hiraeth.mp3"
         self.mp3_path = mp3_path
 
-    # def get_santo_del_giorno(self):
-    #     # todo finish
-    #     s = requests \
-    #         .get("https://www.santodelgiorno.it/santi.json?data={}-{}-{}".format(self.year, self.month, self.day)) \
-    #         .json()
-    #     for x in s:
-    #         print(x["nome"])
-
-    def generate_preview_pope(self):
-        from PIL import ImageDraw, Image, ImageFont
-
-        img = Image.open('resources/previews/1.png')
-
-        final_img = ImageDraw.Draw(img)
-        final_img.resize((1024, 1024), Image.BOX)
-        w, h = img.size
-        font_main = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 100)
-        font_small = ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 40)
-
-        date = datetime.datetime(year=int(self.config.year), month=int(self.config.month), day=int(self.config.day))
-
-        final_img.text((w / 3, h / 4), "Letture del\nGiorno",
-                       fill=(255, 255, 255), align="center", anchor="ms", font=font_main)
-        final_img.text((w / 3, h / 1.61), "con commento del\nSanto Padre",
-                       fill=(255, 255, 255), align="center", anchor="ms", font=font_small)
-        final_img.text((w / 3, h / 1.16), "{}".format(get_date_string(date)),
-                       fill=(255, 255, 255), align="center", anchor="ms",
-                       font=ImageFont.truetype("resources/Tahoma_Regular_font.ttf", 70))
-
-        file_name = "{}/preview.jpeg".format(BASE_PATH)
-        img.save(file_name)
-        return file_name
-
     def get_preview_image(self):
-        if self.config.language == "it":
-            return 'resources/previews/0.png'
-        return 'resources/previews/es.jpg'
+        preview_path = "preview.png"
+        Thumbnail(self.config.date, preview_path).generate_thumbnail()
+        return preview_path
 
     def run(self):
         parts = []
