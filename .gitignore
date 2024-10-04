@@ -4,3 +4,5 @@ docker-output/*
 output/*
 
 video_generator/src/__pycache__
+
+resources/video/*

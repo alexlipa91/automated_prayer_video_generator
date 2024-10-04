@@ -11,16 +11,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt requirements.txt
+COPY video_generator/requirements.txt /requirements.txt
 RUN pip3 install -r requirements.txt
 
 COPY video_generator/src /src
 COPY video_generator/resources /resources
 RUN mkdir /output
 
-COPY credentials.json /credentials.json
+# COPY credentials.json /credentials.json
 
 RUN mv /etc/ImageMagick-6/policy.xml /etc/ImageMagick-6/policy.xml.bkp
 RUN grep -v pattern="@*" /etc/ImageMagick-6/policy.xml.bkp > /etc/ImageMagick-6/policy.xml
 
-ENTRYPOINT ["python3", "-u", "/src/main.py"]
+ENTRYPOINT ["python3", "-u", "/src/audio.py"]
