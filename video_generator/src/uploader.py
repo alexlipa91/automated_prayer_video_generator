@@ -69,14 +69,16 @@ def generate_credentials_file():
     with open("../credentials.json", "w") as outfile:
         outfile.write(credentials.to_json())
 
-
+# run this to generate credentials.json
+def get_credentials():
+    flow = InstalledAppFlow.from_client_secrets_file(
+        CLIENT_SECRETS_FILE, SCOPES
+    )
+    credentials = flow.run_local_server(port=8080)
+    
 # Authorize the request and store authorization credentials.
 def get_authenticated_service():
-    # flow = InstalledAppFlow.from_client_secrets_file(
-    #     CLIENT_SECRETS_FILE, SCOPES
-    # )
     credentials = Credentials.from_authorized_user_file("credentials.json")
-    # credentials = flow.run_local_server(port=8080)
     return build(API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
 
