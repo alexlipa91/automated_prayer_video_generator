@@ -3,6 +3,7 @@ import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 
 class Config:
@@ -10,21 +11,24 @@ class Config:
     language: str = "it"
     date: datetime.date
     audio_only: bool
+    video_duration_secs: Optional[int]
 
     base_video_path: Path = Path("resources/video/base_video_0.mp4")
-    
+
     video_path: Path
     transcript_path: Path
     audio_path: Path
     subs_block_size_seconds: int = 7
 
-    def __init__(self, date: datetime.date, output_root: str, audio_only: bool, skip_clean_output_dir: bool = False):
+    def __init__(self, date: datetime.date, output_root: str, audio_only: bool, video_duration_secs: Optional[int] = None, skip_clean_output_dir: bool = False):
         self.date = date
         self.audio_only = audio_only
+        self.video_duration_secs = video_duration_secs
 
         output_root_path = Path().absolute().joinpath(output_root)
         # delete the output root if it exists
         if not skip_clean_output_dir and output_root_path.exists():
+            print(f"Deleting output directory: {output_root_path}")
             shutil.rmtree(output_root_path)
         output_root_path.mkdir(exist_ok=True)
 
@@ -46,7 +50,8 @@ class Config:
 
 
 def get_config_from_args(args):
-    return Config(date=args.date, output_root=args.output_dir, audio_only=args.audio_only, skip_clean_output_dir=args.skip_clean_output_dir)
+    return Config(date=args.date, output_root=args.output_dir, audio_only=args.audio_only,
+                  skip_clean_output_dir=args.skip_clean_output_dir, video_duration_secs=args.duration_secs)
 
 
 # def get_config(language="it"):

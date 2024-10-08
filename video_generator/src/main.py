@@ -86,6 +86,8 @@ if __name__ == '__main__':
                         help='folder relative to the current work dir where to save the output')
     parser.add_argument('--skip-clean-output-dir', action='store_true',
                         help='do not delete the output folder if it exists')
+    parser.add_argument('--duration-secs', type=int, default=None,
+                        help='cut duration of the video to the specified number of seconds')
 
     config = get_config_from_args(parser.parse_args())
     print("Running with config: {}".format(config.__dict__))
