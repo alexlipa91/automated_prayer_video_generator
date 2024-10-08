@@ -22,19 +22,24 @@ class VideoComposer(PipelineStage):
 
     @staticmethod
     def with_config(config: Config):
-        return VideoComposer(vocals_mp3=config.audio_path, destination_path=config.video_path, subs_path=config.subs_path, duration_secs=config.video_duration_secs)
+        return VideoComposer(vocals_mp3=config.audio_path, background_mp3_path=config.background_music_path, destination_path=config.video_path, subs_path=config.subs_path, duration_secs=config.video_duration_secs)
 
-    def __init__(self, vocals_mp3: Path, destination_path: Path, subs_path: Optional[Path] = None, duration_secs: Optional[int] = None):
+    def __init__(self, vocals_mp3: Path, background_mp3_path: Path, destination_path: Path, subs_path: Optional[Path] = None, duration_secs: Optional[int] = None):
         self.vocals_mp3 = vocals_mp3
         self.destination_path = destination_path
         self.subs_path = subs_path
         self.duration_secs = duration_secs
+        self.background_mp3_path = background_mp3_path
 
     def run(self):
         # audio
         start_audio_at = 1
         audio_parts = [AudioFileClip(
             str(self.vocals_mp3)).set_start(start_audio_at)]
+        if self.background_mp3_path:
+            audio_parts.append(AudioFileClip(
+                str(self.background_mp3_path)))
+
         audio = CompositeAudioClip(audio_parts)
 
         # video

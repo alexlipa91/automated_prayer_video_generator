@@ -14,7 +14,7 @@ class Config:
     video_duration_secs: Optional[int]
 
     base_video_path: Path = Path("resources/video/base_video_0.mp4")
-
+    background_music_path: Path = Path("resources/worship-piano-instrumental-peaceful-prayer-music-223373.mp3")
     video_path: Path
     transcript_path: Path
     audio_path: Path
