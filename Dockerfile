@@ -1,4 +1,4 @@
-FROM python:3.8-slim-buster
+FROM python:3.11-slim-buster
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
@@ -11,11 +11,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-COPY video_generator/requirements.txt /requirements.txt
+COPY requirements.txt /requirements.txt
 RUN pip3 install -r requirements.txt
 
-COPY video_generator/src /src
-COPY video_generator/resources /resources
+COPY video_generator video_generator
+COPY resources /resources
 RUN mkdir /output
 
 # COPY credentials.json /credentials.json
@@ -23,4 +23,4 @@ RUN mkdir /output
 RUN mv /etc/ImageMagick-6/policy.xml /etc/ImageMagick-6/policy.xml.bkp
 RUN grep -v pattern="@*" /etc/ImageMagick-6/policy.xml.bkp > /etc/ImageMagick-6/policy.xml
 
-ENTRYPOINT ["python3", "-u", "/src/audio.py"]
+ENTRYPOINT ["python3", "-u", "video_generator/src/main.py"]

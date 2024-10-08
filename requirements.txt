@@ -43,4 +43,4 @@ tqdm==4.66.5
 treetable==0.2.5
 typing_extensions==4.12.2
 urllib3==2.2.3
--e git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
+ctc-forced-aligner @ git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git
