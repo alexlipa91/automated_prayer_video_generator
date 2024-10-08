@@ -14,10 +14,15 @@ class Config:
     video_duration_secs: Optional[int]
 
     base_video_path: Path = Path("resources/video/base_video_0.mp4")
-    background_music_path: Path = Path("resources/worship-piano-instrumental-peaceful-prayer-music-223373.mp3")
+    background_music_path: Path = Path(
+        "resources/worship-piano-instrumental-peaceful-prayer-music-223373.mp3")
+    thumbnail_base_image_path: Path = Path(
+        "resources/previews/pope_sept_2024.png")
+
     video_path: Path
     transcript_path: Path
     audio_path: Path
+    thumbnail_path: Path
     subs_block_size_seconds: int = 7
 
     def __init__(self, date: datetime.date, output_root: str, audio_only: bool, video_duration_secs: Optional[int] = None, skip_clean_output_dir: bool = False):
@@ -37,7 +42,7 @@ class Config:
         self.transcript_path = output_root_path.joinpath("transcript.txt")
         self.alignment_path = output_root_path.joinpath("alignment.txt")
         self.subs_path = output_root_path.joinpath("subs.srt")
-
+        self.thumbnail_path = output_root_path.joinpath("thumbnail.png")
         # if duration seconds is not specified, the audio duration will be used
         # self.duration_seconds = int(
         #     os.environ["DURATION_SECONDS"]) if "DURATION_SECONDS" in os.environ else None
