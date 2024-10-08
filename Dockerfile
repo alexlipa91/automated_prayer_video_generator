@@ -16,7 +16,6 @@ RUN pip3 install -r requirements.txt
 
 COPY video_generator video_generator
 COPY resources /resources
-RUN mkdir /output
 
 # COPY credentials.json /credentials.json
 

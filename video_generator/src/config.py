@@ -30,7 +30,7 @@ class Config:
         self.audio_only = audio_only
         self.video_duration_secs = video_duration_secs
 
-        output_root_path = Path().absolute().joinpath(output_root)
+        output_root_path = Path().absolute().joinpath(output_root).joinpath(self.date.strftime("%Y-%m-%d"))
         # delete the output root if it exists
         if not skip_clean_output_dir and output_root_path.exists():
             print(f"Deleting output directory: {output_root_path}")
