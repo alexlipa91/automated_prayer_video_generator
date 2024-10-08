@@ -14,7 +14,7 @@ import csv
 
 from firebase_admin import firestore
 
-from src.thumbnail import Thumbnail
+from thumbnail import Thumbnail
 from uploader import find_transcript_auto_synced, download_transcript_srt
 from util import get_date_string
 
