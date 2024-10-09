@@ -89,9 +89,11 @@ class VideoComposer(PipelineStage):
 
 if __name__ == "__main__":
     video_composer = VideoComposer(
-        vocals_mp3=Path("output/audio.mp3"),
-        destination_path=Path("output/video.mp4"),
-        subs_path=Path("output/subs.srt"),
-        duration_secs=10
+        vocals_mp3=Path("output/2024-10-09/audio.mp3"),
+        background_mp3_path=Path(
+            "resources/Drifting at 432 Hz - Unicorn Heads.mp3"),
+        destination_path=Path("output/2024-10-09/video.mp4"),
+        # subs_path=Path("output/subs.srt"),
+        duration_secs=20
     )
     video_composer.run()

@@ -12,7 +12,6 @@ from videos import VideoComposer
 
 
 def run_test_mode(config: Config):
-    config.video_duration_secs = 10
     config.subs_file_name = None
     config.skip_clean_output_dir = True
 
@@ -55,9 +54,14 @@ if __name__ == '__main__':
                         default=datetime.datetime.now().date(), help='date to generate the video for')
     parser.add_argument('--test-mode', action='store_true',
                         help='run test mode (faster). It skips a bunch of steps')
-    config = get_config_from_args(parser.parse_args())
+    parser.add_argument('--output-root', type=str,
+                        default='output', help='output root where to save the generated files')
+    parser.add_argument('--skip-clean-output-dir', action='store_true',
+                        help='skip cleaning the output directory')
+    cli_args = parser.parse_args()
+    config = get_config_from_args(cli_args)
 
-    if config.test_mode:
+    if cli_args.test_mode:
         run_test_mode(config)
     else:
         run(config)

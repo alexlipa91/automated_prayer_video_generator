@@ -9,14 +9,14 @@ from typing import Optional
 class Config:
 
     date: datetime.date
-    video_duration_secs: Optional[int]
     output_root: Path
 
+    video_duration_secs: Optional[int] = None
     language: str = "it"
 
     base_video_path: Path = Path("resources/video/base_video_0.mp4")
     background_music_path: Path = Path(
-        "resources/Emotional Love Theme - Biz Baz Studio.mp3")
+        "resources/Drifting at 432 Hz - Unicorn Heads.mp3")
     thumbnail_base_image_path: Path = Path(
         "resources/previews/pope_sept_2024.png")
 
@@ -33,6 +33,7 @@ class Config:
         self.date = date
         self.output_root = Path(output_root).joinpath(
             Path(self.date.strftime("%Y-%m-%d")))
+        self.skip_clean_output_dir = skip_clean_output_dir
 
     def init_environment(self):
         # delete the output root if it exists
@@ -69,7 +70,7 @@ class Config:
 
 
 def get_config_from_args(args):
-    return Config(date=args.date)
+    return Config(date=args.date, output_root=args.output_root, skip_clean_output_dir=args.skip_clean_output_dir)
 
 
 # def get_config(language="it"):
