@@ -6,6 +6,7 @@ from moviepy.editor import AudioFileClip, CompositeAudioClip, CompositeVideoClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.VideoClip import TextClip
 from moviepy.video.tools.subtitles import SubtitlesClip
+from moviepy.audio.fx.volumex import volumex
 
 
 class VideoComposer(PipelineStage):
@@ -16,6 +17,7 @@ class VideoComposer(PipelineStage):
     """
 
     source_video_path: Path = Path("resources/video/base_video_0.mp4")
+    background_volume_multiplier: float = 0.05
 
     # use it for testing to cut the video short
     duration_secs: Optional[int]
@@ -31,14 +33,23 @@ class VideoComposer(PipelineStage):
         self.duration_secs = duration_secs
         self.background_mp3_path = background_mp3_path
 
+    def get_video_duration_secs(self) -> Optional[int]:
+        if self.duration_secs:
+            return self.duration_secs
+        # if both vocal and background are provided, use the vocal duration + a buffer
+        if self.background_mp3_path:
+            return int(AudioFileClip(str(self.vocals_mp3)).duration) + 10
+        return None
+
     def run(self):
         # audio
         start_audio_at = 1
+
         audio_parts = [AudioFileClip(
             str(self.vocals_mp3)).set_start(start_audio_at)]
         if self.background_mp3_path:
             audio_parts.append(AudioFileClip(
-                str(self.background_mp3_path)))
+                str(self.background_mp3_path)).fx(volumex, self.background_volume_multiplier))
 
         audio = CompositeAudioClip(audio_parts)
 
@@ -66,8 +77,10 @@ class VideoComposer(PipelineStage):
         final_video = CompositeVideoClip(video_parts).set_audio(
             audio)
 
-        if self.duration_secs:
-            final_video = final_video.set_duration(self.duration_secs)
+        video_duration_secs = self.get_video_duration_secs()
+        if video_duration_secs:
+            print("setting video duration to {}".format(video_duration_secs))
+            final_video = final_video.set_duration(video_duration_secs)
 
         print("writing final video to {}".format(self.destination_path))
         final_video.write_videofile(

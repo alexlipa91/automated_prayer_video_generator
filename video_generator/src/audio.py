@@ -2,6 +2,7 @@ import datetime
 import os
 from pathlib import Path
 import subprocess
+from typing import Optional
 
 import requests as requests
 import shutil
@@ -9,6 +10,7 @@ import srt as srt
 from bs4 import BeautifulSoup
 from config import Config
 
+from pydub import AudioSegment
 
 from pipeline import PipelineStage
 
@@ -18,16 +20,29 @@ class VaticanAudioDownloader(PipelineStage):
     source_url: str
     destination_path: Path
 
+    duration_secs: Optional[int]
+
     @staticmethod
     def with_config(config: Config):
         return VaticanAudioDownloader(
             date=config.date,
             language=config.language,
-            destination_path=config.audio_path)
+            destination_path=config.audio_path,
+            duration_secs=config.video_duration_secs)
 
-    def __init__(self, date: datetime.date, destination_path: Path, language: str = "it"):
+    def __init__(self, date: datetime.date, destination_path: Path, language: str = "it", duration_secs: Optional[int] = None):
         self.source_url = get_vatican_source_url(date, language)
         self.destination_path = destination_path
+        self.duration_secs = duration_secs
+
+    def maybe_cut_to_secs(self):
+        if not self.duration_secs:
+            return
+
+        audio = AudioSegment.from_mp3(self.destination_path)
+
+        first_x_seconds = audio[:self.duration_secs*1000]
+        first_x_seconds.export(self.destination_path, format="mp3")
 
     def run(self) -> Path:
         print("downloading audio from {} into {}".format(
@@ -46,54 +61,7 @@ class VaticanAudioDownloader(PipelineStage):
         with open(self.destination_path, 'wb') as f:
             f.write(doc.content)
 
-    # @staticmethod
-    # def _break_sentences(subs, alternative):
-    #     first_word = True
-    #     char_count = 0
-    #     idx = len(subs) + 1
-    #     content = ""
-
-    #     for w in alternative.words:
-    #         if first_word:
-    #             # first word in sentence, record start time
-    #             start = w.start_time
-
-    #         char_count += len(w.word)
-    #         content += " " + w.word.strip()
-
-    #         if ("." in w.word or "!" in w.word or "?" in w.word or
-    #                 char_count > 50 or
-    #                 ("," in w.word and not first_word)):
-    #             # break sentence at: . ! ? or line length exceeded
-    #             # also break if , and not first word
-    #             subs.append(srt.Subtitle(index=idx,
-    #                                      start=start,
-    #                                      end=w.end_time,
-    #                                      content=srt.make_legal_content(content)))
-    #             first_word = True
-    #             idx += 1
-    #             content = ""
-    #             char_count = 0
-    #         else:
-    #             first_word = False
-    #     return subs
-
-    # def generate_subs(self):
-    #     subs = []
-    #     for result in self.gts_resp.results:
-    #         # First alternative is the most probable result
-    #         subs = AudioDownloader._break_sentences(
-    #             subs, result.alternatives[0])
-
-    #     self.write_srt(subs)
-
-    # @staticmethod
-    # def write_srt(subs):
-    #     srt_file = "/output/vangelo.srt"
-    #     print("Writing subtitles to {}".format(srt_file))
-    #     f = open(srt_file, 'w')
-    #     f.writelines(srt.compose(subs))
-    #     f.close()
+        self.maybe_cut_to_secs()
 
 
 class VaticanTranscriptDownloader(PipelineStage):

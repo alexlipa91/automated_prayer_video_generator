@@ -17,8 +17,6 @@ RUN pip3 install -r requirements.txt
 COPY video_generator video_generator
 COPY resources /resources
 
-# COPY credentials.json /credentials.json
-
 RUN mv /etc/ImageMagick-6/policy.xml /etc/ImageMagick-6/policy.xml.bkp
 RUN grep -v pattern="@*" /etc/ImageMagick-6/policy.xml.bkp > /etc/ImageMagick-6/policy.xml
 

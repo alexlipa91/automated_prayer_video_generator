@@ -8,19 +8,22 @@
 import datetime
 import io
 import os
+from pathlib import Path
 import sys
 import traceback
 from http import client
+from typing import Optional
 import httplib2
 import random
 import time
 
-from google.cloud import storage
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google_auth_oauthlib.flow import InstalledAppFlow
+
+from pipeline import PipelineStage
 
 # Explicitly tell the underlying HTTP transport library not to retry, since
 # we are handling retry logic ourselves.
@@ -49,7 +52,7 @@ RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 #   https://developers.google.com/youtube/v3/guides/authentication
 # For more information about the client_secrets.json file format, see:
 #   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
-CLIENT_SECRETS_FILE = '../client_secret.json'
+CLIENT_SECRETS_FILE = 'resources/client_secret.json'
 
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
@@ -61,6 +64,101 @@ API_VERSION = 'v3'
 VALID_PRIVACY_STATUSES = ('public', 'private', 'unlisted')
 
 
+class YoutubeUploader(PipelineStage):
+
+    credentials: Credentials = Credentials.from_authorized_user_file(
+        "resources/credentials.json")
+    youtube_service: build = build(
+        API_SERVICE_NAME, API_VERSION, credentials=credentials)
+
+    title: str
+    description: str
+    tags: list[str]
+    category: str
+    privacy_status: str
+
+    video_file: Path
+    thumbnail_file: Path
+
+    playlist_id: Optional[str]
+
+    def __init__(self, title: str, description: str, tags: list[str], category: str, video_file: Path, thumbnail_file: Path, privacy_status: str, playlist_id: Optional[str] = None):
+        self.video_file = video_file
+        self.thumbnail_file = thumbnail_file
+        self.title = title
+        self.description = description
+        self.tags = tags
+        self.category = category
+        self.privacy_status = privacy_status
+        self.playlist_id = playlist_id
+
+    def run(self):
+        print("uploading video...")
+        video_id = self.upload_video()
+        print("video uploaded with id: {}".format(video_id))
+        if self.playlist_id:
+            self.add_to_playlist(video_id)
+            print("video added to playlist with id: {}".format(self.playlist_id))
+
+    def upload_video(self):
+        body = dict(
+            snippet=dict(
+                title=self.title,
+                description=self.description,
+                tags=self.tags,
+                categoryId=self.category,
+                thumbnails=dict(
+                    default=dict(
+                        url=str(self.thumbnail_file)
+                    )
+                )
+            ),
+            status=dict(
+                selfDeclaredMadeForKids=False,
+                # public, private, unlisted
+                privacyStatus=self.privacy_status
+            )
+        )
+
+        # Call the API's videos.insert method to create and upload the video.
+        insert_request = self.youtube_service.videos().insert(
+            part=','.join(body.keys()),
+            body=body,
+            # The chunksize parameter specifies the size of each chunk of data, in
+            # bytes, that will be uploaded at a time. Set a higher value for
+            # reliable connections as fewer chunks lead to faster uploads. Set a lower
+            # value for better recovery on less reliable connections.
+            #
+            # Setting 'chunksize' equal to -1 in the code below means that the entire
+            # file will be uploaded in a single HTTP request. (If the upload fails,
+            # it will still be retried where it left off.) This is usually a best
+            # practice, but if you're using Python older than 2.6 or if you're
+            # running on App Engine, you should set the chunksize to something like
+            # 1024 * 1024 (1 megabyte).
+            media_body=MediaFileUpload(
+                str(self.video_file), chunksize=-1, resumable=True)
+        )
+
+        return resumable_upload(insert_request)
+
+    def add_to_playlist(self, video_id: str):
+        add_video_request = self.youtube_service.playlistItems().insert(
+        part="snippet",
+        body={
+            'snippet': {
+                'playlistId': self.playlist_id,
+                'resourceId': {
+                    'kind': 'youtube#video',
+                    'videoId': video_id
+                    }
+                }
+            }
+        )
+        response = add_video_request.execute()
+        print(response)
+
+
+# run this to generate credentials.json
 def generate_credentials_file():
     flow = InstalledAppFlow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, SCOPES
@@ -69,58 +167,12 @@ def generate_credentials_file():
     with open("../credentials.json", "w") as outfile:
         outfile.write(credentials.to_json())
 
-# run this to generate credentials.json
+
 def get_credentials():
     flow = InstalledAppFlow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, SCOPES
     )
     credentials = flow.run_local_server(port=8080)
-    
-# Authorize the request and store authorization credentials.
-def get_authenticated_service():
-    credentials = Credentials.from_authorized_user_file("credentials.json")
-    return build(API_SERVICE_NAME, API_VERSION, credentials=credentials)
-
-
-def initialize_upload(youtube, file, thumbnail, title, description, category, tags, privacy_status):
-    body = dict(
-        snippet=dict(
-            title=title,
-            description=description,
-            tags=tags,
-            categoryId=category,
-            thumbnails=dict(
-                default=dict(
-                    url=thumbnail
-                )
-            )
-        ),
-        status=dict(
-            selfDeclaredMadeForKids=False,
-            privacyStatus=privacy_status
-        )
-    )
-
-    # Call the API's videos.insert method to create and upload the video.
-    insert_request = youtube.videos().insert(
-        part=','.join(body.keys()),
-        body=body,
-        # The chunksize parameter specifies the size of each chunk of data, in
-        # bytes, that will be uploaded at a time. Set a higher value for
-        # reliable connections as fewer chunks lead to faster uploads. Set a lower
-        # value for better recovery on less reliable connections.
-        #
-        # Setting 'chunksize' equal to -1 in the code below means that the entire
-        # file will be uploaded in a single HTTP request. (If the upload fails,
-        # it will still be retried where it left off.) This is usually a best
-        # practice, but if you're using Python older than 2.6 or if you're
-        # running on App Engine, you should set the chunksize to something like
-        # 1024 * 1024 (1 megabyte).
-        media_body=MediaFileUpload(file, chunksize=-1, resumable=True)
-    )
-
-    return resumable_upload(insert_request)
-
 
 # This method implements an exponential backoff strategy to resume a
 # failed upload.
@@ -171,27 +223,11 @@ def set_thumbnail(youtube, video_id, thumbnail_file):
     print(response)
 
 
-def add_to_playlist(youtube, video_id, playlist_id="PLYFkvAawma-XL1-y8nZU3tLf9WTKnI11m"):
-    add_video_request = youtube.playlistItems().insert(
-        part="snippet",
-        body={
-            'snippet': {
-                'playlistId': playlist_id,
-                'resourceId': {
-                    'kind': 'youtube#video',
-                    'videoId': video_id
-                }
-            }
-        }
-    )
-    response = add_video_request.execute()
-    print(response)
-
-
 def add_transcript(youtube, video_id, transcript_file_path, language="it"):
     i = 0
     while i < 3:
-        print("sending request to upload transcript {} to video {}".format(transcript_file_path, video_id))
+        print("sending request to upload transcript {} to video {}".format(
+            transcript_file_path, video_id))
         req = youtube.captions().insert(
             part="snippet",
             body=dict(
@@ -239,7 +275,8 @@ def upload_audio_only(config, video_path, transcript_path):
     privacy_status = "private"
 
     youtube = get_authenticated_service()
-    video_id = initialize_upload(youtube, video_path, None, title, "", "22", [], privacy_status)
+    video_id = initialize_upload(
+        youtube, video_path, None, title, "", "22", [], privacy_status)
     add_transcript(youtube, video_id, transcript_path)
     return video_id
 
@@ -262,11 +299,13 @@ def upload(config, video_path, preview_path, transcript_path):
     description = "Vangelo e letture del giorno, con commento del Santo Padre\n\nOfferto da: {}\nMusica di Scott Buckley, Hiraeth".format(
         source_url)
     category = "22"
-    tags = ["vangelo", "preghiere", "chiesa", "gesù", "bibbia", "vaticano", "papa"]
+    tags = ["vangelo", "preghiere", "chiesa",
+            "gesù", "bibbia", "vaticano", "papa"]
     privacy_status = "public"
 
     youtube = get_authenticated_service()
-    video_id = initialize_upload(youtube, video_path, preview_path, title, description, category, tags, privacy_status)
+    video_id = initialize_upload(
+        youtube, video_path, preview_path, title, description, category, tags, privacy_status)
     set_thumbnail(youtube, video_id, preview_path)
     add_to_playlist(youtube, video_id)
     add_transcript(youtube, video_id, transcript_path)
@@ -283,13 +322,16 @@ def upload_es(config, video_path, preview_path, transcript_path):
     title = "Evangelio de Hoy: {}".format(date_string)
     description = "Evangelio y lecturas del dia"
     category = "22"
-    tags = ["evangelio", "oración", "iglesia", "gesù", "biblia", "vaticano", "papa"]
+    tags = ["evangelio", "oración", "iglesia",
+            "gesù", "biblia", "vaticano", "papa"]
     privacy_status = "public"
 
     youtube = get_authenticated_service()
-    video_id = initialize_upload(youtube, video_path, preview_path, title, description, category, tags, privacy_status)
+    video_id = initialize_upload(
+        youtube, video_path, preview_path, title, description, category, tags, privacy_status)
     set_thumbnail(youtube, video_id, preview_path)
-    add_to_playlist(youtube, video_id, playlist_id="PLYFkvAawma-UGoEyPMwnsmzJtYut-wie7")
+    add_to_playlist(youtube, video_id,
+                    playlist_id="PLYFkvAawma-UGoEyPMwnsmzJtYut-wie7")
     add_transcript(youtube, video_id, transcript_path, language="es")
     return video_id
 
@@ -369,16 +411,13 @@ def find_transcript_auto_synced(video_id):
 
 
 if __name__ == '__main__':
-    import json
-    # generate_credentials_file()
-    # sys.exit(1)
-    # os.environ["CREDENTIALS_FILE"] = "credentials.json"
-
-    # y = get_authenticated_service()
-    transcript_id = find_transcript_auto_synced("Fj3kehnKS6I")
-    download_transcript_srt(transcript_id, "test.srt")
-
-    # add_transcript(y, "Cq3mE4V3DGw", "20221126/transcript.txt")
-
-    # download_transcript_srt(y, "AUieDabTop6Xj678ENZojEnEpQUptwD-tCxem8xUW-OMSlTQnznKZ7YmY2x4XMg",
-    #                         "20221126/downloaded_transcript.srt")
+    YoutubeUploader(
+        title="test",
+        description="test",
+        tags=["test"],
+        video_file=Path("docker-output/2024-10-08/video.mp4"),
+        thumbnail_file=Path("docker-output/2024-10-08/thumbnail.jpg"),
+        privacy_status="private",
+        category="22",
+        playlist_id="PLYFkvAawma-UGoEyPMwnsmzJtYut-wie7"
+    ).upload_video()

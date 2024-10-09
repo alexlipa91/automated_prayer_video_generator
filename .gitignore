@@ -6,3 +6,5 @@ output/*
 video_generator/src/__pycache__
 
 resources/video/*
+resources/client_secret.json
+resources/credentials.json
