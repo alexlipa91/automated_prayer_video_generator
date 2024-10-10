@@ -25,6 +25,8 @@ class Config:
     thumbnail_file_name: str = "thumbnail.png"
     subs_file_name: Optional[str] = "subs.srt"
 
+    listed: bool = False  # whether the video should be listed on youtube or not
+
     subs_block_size_seconds: int = 7
 
     def __init__(self, date: datetime.date = datetime.now().date(), output_root: str = "output", skip_clean_output_dir: bool = False):
@@ -33,7 +35,7 @@ class Config:
             Path(self.date.strftime("%Y-%m-%d")))
         self.skip_clean_output_dir = skip_clean_output_dir
 
-        locale.setlocale(locale.LC_TIME, "it_IT")  # swedish
+        locale.setlocale(locale.LC_ALL, str('it_IT.utf8'))
 
     def init_environment(self):
         # delete the output root if it exists
