@@ -1,16 +1,14 @@
-import os
 import shutil
-import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+import locale
 
 
 class Config:
 
-    date: datetime.date
-    output_root: Path
-
+    date: datetime.date = datetime.now().date()
+    output_root: Path = Path("output")
     video_duration_secs: Optional[int] = None
     language: str = "it"
 
@@ -29,11 +27,13 @@ class Config:
 
     subs_block_size_seconds: int = 7
 
-    def __init__(self, date: datetime.date, output_root: str, skip_clean_output_dir: bool = False):
+    def __init__(self, date: datetime.date = datetime.now().date(), output_root: str = "output", skip_clean_output_dir: bool = False):
         self.date = date
         self.output_root = Path(output_root).joinpath(
             Path(self.date.strftime("%Y-%m-%d")))
         self.skip_clean_output_dir = skip_clean_output_dir
+
+        locale.setlocale(locale.LC_TIME, "it_IT")  # swedish
 
     def init_environment(self):
         # delete the output root if it exists
