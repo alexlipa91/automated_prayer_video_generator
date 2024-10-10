@@ -16,7 +16,7 @@ class Config:
 
     base_video_path: Path = Path("resources/video/base_video_0.mp4")
     background_music_path: Path = Path(
-        "resources/Drifting at 432 Hz - Unicorn Heads.mp3")
+        "resources/background/Drifting at 432 Hz - Unicorn Heads.mp3")
     thumbnail_base_image_path: Path = Path(
         "resources/previews/pope_sept_2024.png")
 
