@@ -7,7 +7,7 @@ from config import Config, get_config_from_args
 from audio import DemucsAudioProcessor, VaticanAudioDownloader, VaticanTranscriptDownloader
 from subtitles import AlignmentGenerator, SubtitlesGenerator
 from thumbnail import ThumbnailGenerator
-from uploader import YoutubeUploader
+from uploader import VaticanYoutubeUploader, YoutubeUploader
 from videos import VideoComposer
 
 
@@ -42,7 +42,7 @@ def run(config: Config):
     SubtitlesGenerator.with_config(config).run()
     VideoComposer.with_config(config).run()
     ThumbnailGenerator.with_config(config).run()
-    YoutubeUploader.with_config(config).run()
+    VaticanYoutubeUploader(config).run()
 
     end = time.time()
     print("Done in {}".format(datetime.timedelta(seconds=end - start)))

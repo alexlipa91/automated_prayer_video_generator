@@ -24,6 +24,7 @@ from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 from pipeline import PipelineStage
+from config import Config
 
 # Explicitly tell the underlying HTTP transport library not to retry, since
 # we are handling retry logic ourselves.
@@ -143,13 +144,13 @@ class YoutubeUploader(PipelineStage):
 
     def add_to_playlist(self, video_id: str):
         add_video_request = self.youtube_service.playlistItems().insert(
-        part="snippet",
-        body={
-            'snippet': {
-                'playlistId': self.playlist_id,
-                'resourceId': {
-                    'kind': 'youtube#video',
-                    'videoId': video_id
+            part="snippet",
+            body={
+                'snippet': {
+                    'playlistId': self.playlist_id,
+                    'resourceId': {
+                        'kind': 'youtube#video',
+                        'videoId': video_id
                     }
                 }
             }
@@ -410,14 +411,42 @@ def find_transcript_auto_synced(video_id):
     return None
 
 
+class VaticanYoutubeUploader(YoutubeUploader):
+    def __init__(self, c: Config):
+        title = "Vangelo del Giorno - {}".format(
+            c.date.strftime("%A %d %B %Y"))
+        description = """
+Vangelo e letture del giorno, con commento del Santo Padre.
+        
+Offerto da: https://www.vaticannews.va/it
+#vangelo
+#vangelodelgiorno
+#papafrancesco
+#vaticannews 
+        
+A casa vostra, ogni giorno
+        
+
+----------------
+
+
+{}        
+        """.format(open(c.transcript_path).read())
+        tags = ["vangelo", "preghiere", "chiesa",
+                "gesù", "bibbia", "vaticano", "papa", "francesco", "omelia"]
+        category = "22",
+        playlist_id = "PLYFkvAawma-UGoEyPMwnsmzJtYut-wie7"
+        super().__init__(title=title,
+                         description=description,
+                         tags=tags,
+                         category=category,
+                         video_file=c.video_path,
+                         thumbnail_file=c.thumbnail_path,
+                         privacy_status="public" if c.listed else "unlisted",
+                         playlist_id=playlist_id,
+                         )
+
+
 if __name__ == '__main__':
-    YoutubeUploader(
-        title="test",
-        description="test",
-        tags=["test"],
-        video_file=Path("docker-output/2024-10-08/video.mp4"),
-        thumbnail_file=Path("docker-output/2024-10-08/thumbnail.jpg"),
-        privacy_status="private",
-        category="22",
-        playlist_id="PLYFkvAawma-UGoEyPMwnsmzJtYut-wie7"
-    ).upload_video()
+    c = Config(date=datetime.date(2024, 10, 8))
+    VaticanYoutubeUploader(c.date, c.transcript_path)
