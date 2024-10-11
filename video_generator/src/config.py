@@ -16,7 +16,7 @@ class Config:
     background_music_path: Path = Path(
         "resources/background/Drifting at 432 Hz - Unicorn Heads.mp3")
     thumbnail_base_image_path: Path = Path(
-        "resources/images/pope_sept_2024.png")
+        "resources/images/pope_preview_2023.png")
 
     video_file_name: str = "video.mp4"
     transcript_file_name: str = "transcript.txt"
@@ -35,15 +35,17 @@ class Config:
             Path(self.date.strftime("%Y-%m-%d")))
         self.skip_clean_output_dir = skip_clean_output_dir
 
-        locale.setlocale(locale.LC_ALL, str('it_IT.utf8'))
-
     def init_environment(self):
         # delete the output root if it exists
         if not self.skip_clean_output_dir and self.output_root.exists():
             print(f"Deleting output directory: {self.output_root}")
             shutil.rmtree(self.output_root)
         self.output_root.mkdir(exist_ok=True)
+        self.set_locale()
 
+    def set_locale(self):
+        locale.setlocale(locale.LC_ALL, str('it_IT'))
+        
     @property
     def video_path(self) -> Path:
         return self.output_root.joinpath(self.video_file_name)
