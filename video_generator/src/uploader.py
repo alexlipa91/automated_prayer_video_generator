@@ -57,7 +57,7 @@ CLIENT_SECRETS_FILE = 'resources/client_secret.json'
 
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
-SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 
+SCOPES = ['https://www.googleapis.com/auth/youtube.upload',
           'https://www.googleapis.com/auth/youtube',
           'https://www.googleapis.com/auth/youtubepartner']
 API_SERVICE_NAME = 'youtube'
@@ -101,6 +101,15 @@ class YoutubeUploader(PipelineStage):
         if self.playlist_id:
             self.add_to_playlist(video_id)
             print("video added to playlist with id: {}".format(self.playlist_id))
+        self.upload_thumbnail(video_id)
+        print("thumbnail uploaded")
+
+    def upload_thumbnail(self, video_id: str):
+        request = self.youtube_service.thumbnails().set(
+            videoId=video_id,
+            media_body=MediaFileUpload(self.thumbnail_file)
+        )
+        request.execute()
 
     def upload_video(self):
         body = dict(
@@ -109,11 +118,11 @@ class YoutubeUploader(PipelineStage):
                 description=self.description,
                 tags=self.tags,
                 categoryId=self.category,
-                thumbnails=dict(
-                    default=dict(
-                        url=str(self.thumbnail_file)
-                    )
-                )
+                # thumbnails=dict(
+                #     default=dict(
+                #         url=str(self.thumbnail_file)
+                #     )
+                # )
             ),
             status=dict(
                 selfDeclaredMadeForKids=False,
@@ -222,7 +231,6 @@ def set_thumbnail(youtube, video_id, thumbnail_file):
         media_body=MediaFileUpload(thumbnail_file)
     )
     response = request.execute()
-    print(response)
 
 
 def add_transcript(youtube, video_id, transcript_file_path, language="it"):
@@ -415,7 +423,7 @@ def find_transcript_auto_synced(video_id):
 class VaticanYoutubeUploader(YoutubeUploader):
     def __init__(self, c: Config):
         title = "Vangelo del Giorno - {}".format(
-            c.date.strftime("%A %d %B %Y"))
+            c.date.strftime("%A %d %B %Y").title())
         description = """
 Vangelo e letture del giorno, con commento del Santo Padre.
         
@@ -451,5 +459,4 @@ Prodotti Consigliati:
 
 
 if __name__ == '__main__':
-    c = Config(date=datetime.date(2024, 10, 8))
-    VaticanYoutubeUploader(c).run()
+    VaticanYoutubeUploader(Config()).upload_thumbnail(video_id="tJUs2hQRWvg")
