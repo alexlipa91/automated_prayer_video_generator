@@ -44,7 +44,7 @@ class Config:
         self.set_locale()
 
     def set_locale(self):
-        locale.setlocale(locale.LC_ALL, str('it_IT'))
+        locale.setlocale(locale.LC_ALL, str('it_IT.UTF-8'))
         
     @property
     def video_path(self) -> Path:
