@@ -99,17 +99,17 @@ class VaticanTranscriptDownloader(PipelineStage):
 
         # prima lettura
         prima_lettura = divs[0]
-        sub_div = prima_lettura[2 if len(
-            prima_lettura[0].findAll("b")) > 0 else 0]
+        starting_idx = 2 if len(prima_lettura[0].findAll("b")) > 0 else 0
+        sub_div = prima_lettura[starting_idx:]
         texts = [p.getText().strip() for p in sub_div]
         final_texts.append("\n".join(self.consolidate_spaces(texts)))
 
         seconda_lettura = divs[1]
-        texts = [p.getText().strip() for p in seconda_lettura[0]]
+        texts = [p.getText().strip() for p in seconda_lettura[0:]]
         final_texts.append("\n".join(self.consolidate_spaces(texts)))
 
         omelia = divs[2]
-        texts = [p.getText().strip() for p in omelia[0]]
+        texts = [p.getText().strip() for p in omelia[0:]]
         final_texts.append("\n".join(self.consolidate_spaces(texts)))
 
         with open(self.destination_path, "w") as text_file:
@@ -173,6 +173,4 @@ def get_vatican_source_url(date: datetime.date, language: str = "it"):
 
 
 if __name__ == "__main__":
-    VaticanTranscriptDownloader(date=datetime.date(
-        2024, 10, 4), destination_path=Path("output/transcript.txt")).run()
-    # DemucsAudioProcessor(original_mp3_path=Path("output/audio.mp3"), destination_path=Path("output/audio_vocals.mp3")).run()
+    VaticanTranscriptDownloader.with_config(Config()).run()
