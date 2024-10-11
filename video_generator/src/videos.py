@@ -71,8 +71,6 @@ class VideoComposer(PipelineStage):
                                .set_position(("center", 825))
                                .set_start(start_audio_at))
 
-        video = CompositeVideoClip(video_parts)
-
         # write
         final_video = CompositeVideoClip(video_parts).set_audio(
             audio)
@@ -88,12 +86,7 @@ class VideoComposer(PipelineStage):
 
 
 if __name__ == "__main__":
-    video_composer = VideoComposer(
-        vocals_mp3=Path("output/2024-10-09/audio.mp3"),
-        background_mp3_path=Path(
-            "resources/background/Drifting at 432 Hz - Unicorn Heads.mp3"),
-        destination_path=Path("output/2024-10-09/video.mp4"),
-        # subs_path=Path("output/subs.srt"),
-        duration_secs=20
-    )
+    c = Config()
+    c.video_duration_secs = 30
+    video_composer = VideoComposer.with_config(config=c)
     video_composer.run()

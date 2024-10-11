@@ -135,16 +135,4 @@ class SubtitlesGenerator(PipelineStage):
 
 
 if __name__ == "__main__":
-    alignment_file_path = Path("output/alignment.txt")
-
-    alignment_generator = AlignmentGenerator(
-        audio_file_path=Path("output/htdemucs/audio/vocals.mp3"),
-        text_file_path=Path("output/transcript.txt"),
-        destination_path=alignment_file_path)
-    alignment_generator.run()
-
-    subtitles_generator = SubtitlesGenerator(
-        alignment_file_path=alignment_file_path,
-        destination_path=Path("output/subs.srt"),
-        subs_block_size_seconds=7)
-    subtitles_generator.run()
+    AlignmentGenerator.with_config(Config()).run()

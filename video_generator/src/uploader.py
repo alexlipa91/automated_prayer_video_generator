@@ -57,7 +57,8 @@ CLIENT_SECRETS_FILE = 'resources/client_secret.json'
 
 # This OAuth 2.0 access scope allows an application to upload files to the
 # authenticated user's YouTube channel, but doesn't allow other types of access.
-SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube',
+SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 
+          'https://www.googleapis.com/auth/youtube',
           'https://www.googleapis.com/auth/youtubepartner']
 API_SERVICE_NAME = 'youtube'
 API_VERSION = 'v3'
@@ -425,7 +426,9 @@ Offerto da: https://www.vaticannews.va/it
 #vaticannews 
         
 A casa vostra, ogni giorno
-        
+
+Prodotti Consigliati: 
+- Bibbia ufficiale CEI: https://amzn.to/4eEIfAu
 
 ----------------
 
@@ -434,7 +437,7 @@ A casa vostra, ogni giorno
         """.format(open(c.transcript_path).read())
         tags = ["vangelo", "preghiere", "chiesa",
                 "gesù", "bibbia", "vaticano", "papa", "francesco", "omelia"]
-        category = "22",
+        category = "22"
         playlist_id = "PLYFkvAawma-UGoEyPMwnsmzJtYut-wie7"
         super().__init__(title=title,
                          description=description,
@@ -449,4 +452,4 @@ A casa vostra, ogni giorno
 
 if __name__ == '__main__':
     c = Config(date=datetime.date(2024, 10, 8))
-    VaticanYoutubeUploader(c.date, c.transcript_path)
+    VaticanYoutubeUploader(c).run()
