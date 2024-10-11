@@ -4,6 +4,7 @@ from pathlib import Path
 import subprocess
 from typing import Optional
 
+import bs4
 import requests as requests
 import shutil
 import srt as srt
@@ -77,16 +78,12 @@ class VaticanTranscriptDownloader(PipelineStage):
         self.source_url = get_vatican_source_url(date, language)
         self.destination_path = destination_path
 
-    def consolidate_spaces(self, text_tokens: list[str]) -> list[str]:
-        final_text = []
-        for idx, text in enumerate(text_tokens):
-            if len(text) == 0 and idx > 0 and idx < len(text_tokens) and text_tokens[idx-1] == '' == text_tokens[idx+1]:
-                continue
-            else:
-                final_text.append(text)
-
-        return final_text
-
+    def process_div(self, div: list[bs4.element.Tag], text_tokens: list[str]) -> list[str]:
+         for p in div:
+            for c in p.contents:
+                if not c.name == "br":
+                    text_tokens.append(c.getText().strip())
+                    
     def run(self):
         print("downloading transcript from {} to {}".format(
             self.source_url, self.destination_path))
@@ -100,20 +97,21 @@ class VaticanTranscriptDownloader(PipelineStage):
         # prima lettura
         prima_lettura = divs[0]
         starting_idx = 2 if len(prima_lettura[0].findAll("b")) > 0 else 0
-        sub_div = prima_lettura[starting_idx:]
-        texts = [p.getText().strip() for p in sub_div]
-        final_texts.append("\n".join(self.consolidate_spaces(texts)))
-
+        prima_lettura = prima_lettura[starting_idx:]
+        self.process_div(prima_lettura, final_texts)
+        
+        final_texts.extend(["", ""])
+        
         seconda_lettura = divs[1]
-        texts = [p.getText().strip() for p in seconda_lettura[0:]]
-        final_texts.append("\n".join(self.consolidate_spaces(texts)))
-
+        self.process_div(seconda_lettura, final_texts)
+        
+        final_texts.extend(["", ""])
+        
         omelia = divs[2]
-        texts = [p.getText().strip() for p in omelia[0:]]
-        final_texts.append("\n".join(self.consolidate_spaces(texts)))
+        self.process_div(omelia, final_texts)
 
         with open(self.destination_path, "w") as text_file:
-            text_file.write('\n\n\n'.join(final_texts))
+            text_file.write('\n'.join(final_texts))
 
 
 class DemucsAudioProcessor(PipelineStage):
