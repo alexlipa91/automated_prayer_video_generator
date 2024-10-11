@@ -1,5 +1,6 @@
 import datetime
 from pathlib import Path
+import shutil
 from PIL import ImageDraw, Image, ImageFont
 from util import get_date_string
 from pipeline import PipelineStage
@@ -23,6 +24,16 @@ class ThumbnailGenerator(PipelineStage):
 
     def run(self):
         print(f"Generating thumbnail to {self.destination_path}")
+        if self.base_image_path == "resources/images/pope_sept_2024.png":
+            self.add_text_on_image()
+        else:
+            print("Simply copying base image to destination")
+            self.copy_base_image()
+
+    def copy_base_image(self):
+        shutil.copy(self.base_image_path, self.destination_path)
+
+    def add_text_on_image(self):
         img = Image.open(self.base_image_path)
 
         final_img = ImageDraw.Draw(img)
