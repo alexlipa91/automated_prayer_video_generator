@@ -3,7 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 import locale
-
+import firebase_admin
 
 class Config:
 
@@ -34,6 +34,9 @@ class Config:
         self.output_root = Path(output_root).joinpath(
             Path(self.date.strftime("%Y-%m-%d")))
         self.skip_clean_output_dir = skip_clean_output_dir
+        
+        firebase_admin.initialize_app()
+
 
     def init_environment(self):
         # delete the output root if it exists

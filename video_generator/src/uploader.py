@@ -22,6 +22,8 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from google_auth_oauthlib.flow import InstalledAppFlow
+from firebase_admin import firestore
+from google.oauth2 import service_account
 
 from pipeline import PipelineStage
 from config import Config
@@ -84,7 +86,10 @@ class YoutubeUploader(PipelineStage):
 
     playlist_id: Optional[str]
 
-    def __init__(self, title: str, description: str, tags: list[str], category: str, video_file: Path, thumbnail_file: Path, privacy_status: str, playlist_id: Optional[str] = None):
+    store_in_firestore_field: Optional[str]
+
+    def __init__(self, date: datetime.date, title: str, description: str, tags: list[str], category: str, video_file: Path, thumbnail_file: Path, privacy_status: str, playlist_id: Optional[str] = None):
+        self.date = date
         self.video_file = video_file
         self.thumbnail_file = thumbnail_file
         self.title = title
@@ -168,8 +173,13 @@ class YoutubeUploader(PipelineStage):
         response = add_video_request.execute()
         print(response)
 
+    def store_in_firestore(self, video_id: str):
+        db = firestore.Client(
+            credentials=service_account.Credentials.from_service_account_file("resources/prayers-channel-sa.json"))
+        db.collection('video_uploads').document(self.date.strftime(
+            "%Y-%m-%d")).set({"new_video_id": video_id}, merge=True)
 
-# run this to generate credentials.json
+
 def generate_credentials_file():
     flow = InstalledAppFlow.from_client_secrets_file(
         CLIENT_SECRETS_FILE, SCOPES
@@ -447,16 +457,19 @@ Prodotti Consigliati:
                 "gesù", "bibbia", "vaticano", "papa", "francesco", "omelia"]
         category = "22"
         playlist_id = "PLYFkvAawma-UGoEyPMwnsmzJtYut-wie7"
-        super().__init__(title=title,
-                         description=description,
-                         tags=tags,
-                         category=category,
-                         video_file=c.video_path,
-                         thumbnail_file=c.thumbnail_path,
-                         privacy_status="public" if c.listed else "unlisted",
-                         playlist_id=playlist_id,
-                         )
+        super().__init__(
+            date=datetime.datetime.now().date(),
+            title=title,
+            description=description,
+            tags=tags,
+            category=category,
+            video_file=c.video_path,
+            thumbnail_file=c.thumbnail_path,
+            privacy_status="public" if c.listed else "unlisted",
+            playlist_id=playlist_id,
+        )
 
 
 if __name__ == '__main__':
-    VaticanYoutubeUploader(Config()).upload_thumbnail(video_id="tJUs2hQRWvg")
+    VaticanYoutubeUploader(Config(date=datetime.date(
+        year=2024, month=10, day=11))).store_in_firestore(video_id="abc")
