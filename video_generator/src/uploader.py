@@ -69,17 +69,14 @@ VALID_PRIVACY_STATUSES = ('public', 'private', 'unlisted')
 
 
 class YoutubeUploader(PipelineStage):
-
-    credentials: Credentials = Credentials.from_authorized_user_file(
-        "resources/credentials.json")
-    youtube_service: build = build(
-        API_SERVICE_NAME, API_VERSION, credentials=credentials)
-
     title: str
     description: str
     tags: list[str]
     category: str
     privacy_status: str
+
+    youtube_credentials_json_path: str = "resources/credentials.json"
+    firestore_sa_path: str = "resources/prayers-channel-sa.json"
 
     video_file: Path
     thumbnail_file: Path
@@ -98,6 +95,9 @@ class YoutubeUploader(PipelineStage):
         self.category = category
         self.privacy_status = privacy_status
         self.playlist_id = playlist_id
+
+        self.youtube_service: build = build(API_SERVICE_NAME, API_VERSION, credentials=Credentials.from_authorized_user_file(
+            str(self.youtube_credentials_json_path)))
 
     def run(self):
         print("uploading video...")
@@ -175,7 +175,7 @@ class YoutubeUploader(PipelineStage):
 
     def store_in_firestore(self, video_id: str):
         db = firestore.Client(
-            credentials=service_account.Credentials.from_service_account_file("resources/prayers-channel-sa.json"))
+            credentials=service_account.Credentials.from_service_account_file(self.firestore_sa_path))
         db.collection('video_uploads').document(self.date.strftime(
             "%Y-%m-%d")).set({"new_video_id": video_id}, merge=True)
 
