@@ -27,7 +27,7 @@ class Config:
 
     listed: bool = False  # whether the video should be listed on youtube or not
 
-    subs_block_size_seconds: int = 7
+    subs_block_size_seconds: int = 3
 
     def __init__(self, date: datetime.date = datetime.now().date(), output_root: str = "output", skip_clean_output_dir: bool = False):
         self.date = date
