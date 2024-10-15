@@ -177,7 +177,7 @@ class YoutubeUploader(PipelineStage):
         db = firestore.Client(
             credentials=service_account.Credentials.from_service_account_file(self.firestore_sa_path))
         db.collection('video_uploads').document(self.date.strftime(
-            "%Y-%m-%d")).set({"new_video_id": video_id}, merge=True)
+            "%Y-%m-%d")).set({"video_id": video_id}, merge=True)
 
 
 def generate_credentials_file():

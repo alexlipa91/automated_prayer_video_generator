@@ -27,7 +27,7 @@ class Config:
     thumbnail_file_name: str = "thumbnail.png"
     subs_file_name: Optional[str] = "subs.srt"
 
-    listed: bool = False  # whether the video should be listed on youtube or not
+    listed: bool = True  # whether the video should be listed on youtube or not
 
     subs_block_size_seconds: int = 3
 
