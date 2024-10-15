@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Optional
 import locale
 import firebase_admin
+import os
+
 
 class Config:
 
@@ -34,21 +36,20 @@ class Config:
         self.output_root = Path(output_root).joinpath(
             Path(self.date.strftime("%Y-%m-%d")))
         self.skip_clean_output_dir = skip_clean_output_dir
-        
-        firebase_admin.initialize_app()
 
+        firebase_admin.initialize_app()
 
     def init_environment(self):
         # delete the output root if it exists
         if not self.skip_clean_output_dir and self.output_root.exists():
             print(f"Deleting output directory: {self.output_root}")
             shutil.rmtree(self.output_root)
-        self.output_root.mkdir(exist_ok=True)
+        os.makedirs(self.output_root, exist_ok=True)
         self.set_locale()
 
     def set_locale(self):
         locale.setlocale(locale.LC_ALL, str('it_IT.UTF-8'))
-        
+
     @property
     def video_path(self) -> Path:
         return self.output_root.joinpath(self.video_file_name)
