@@ -185,7 +185,7 @@ def generate_credentials_file():
         CLIENT_SECRETS_FILE, SCOPES
     )
     credentials = flow.run_local_server(port=8080)
-    with open("../credentials.json", "w") as outfile:
+    with open("resources/credentials.json", "w") as outfile:
         outfile.write(credentials.to_json())
 
 
@@ -471,5 +471,6 @@ Prodotti Consigliati:
 
 
 if __name__ == '__main__':
-    VaticanYoutubeUploader(Config(date=datetime.date(
-        year=2024, month=10, day=11))).store_in_firestore(video_id="abc")
+    generate_credentials_file()
+    # VaticanYoutubeUploader(Config(date=datetime.date(
+    #     year=2024, month=10, day=11))).store_in_firestore(video_id="abc")
