@@ -106,6 +106,8 @@ class YoutubeUploader(PipelineStage):
         if self.playlist_id:
             self.add_to_playlist(video_id)
             print("video added to playlist with id: {}".format(self.playlist_id))
+        if self.store_in_firestore_field:
+            self.store_in_firestore(video_id=video_id)
         self.upload_thumbnail(video_id)
         print("thumbnail uploaded")
 
@@ -185,7 +187,6 @@ def generate_credentials_file():
         CLIENT_SECRETS_FILE, SCOPES
     )
     credentials = flow.run_local_server(port=8080)
-    with open("resources/credentials.json", "w") as outfile:
         outfile.write(credentials.to_json())
 
 
