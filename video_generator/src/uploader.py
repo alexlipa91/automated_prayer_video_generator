@@ -187,7 +187,7 @@ def generate_credentials_file():
         CLIENT_SECRETS_FILE, SCOPES
     )
     credentials = flow.run_local_server(port=8080)
-        outfile.write(credentials.to_json())
+    outfile.write(credentials.to_json())
 
 
 def get_credentials():
