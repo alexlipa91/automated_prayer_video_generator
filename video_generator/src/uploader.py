@@ -107,10 +107,11 @@ class YoutubeUploader(PipelineStage):
         if self.playlist_id:
             self.add_to_playlist(video_id)
             print("video added to playlist with id: {}".format(self.playlist_id))
-        if self.store_firestore:
-            self.store_in_firestore(video_id=video_id)
         self.upload_thumbnail(video_id)
         print("thumbnail uploaded")
+        if self.store_firestore:
+            self.store_in_firestore(video_id=video_id)
+        print("stored id in firestore")
 
     def upload_thumbnail(self, video_id: str):
         request = self.youtube_service.thumbnails().set(
