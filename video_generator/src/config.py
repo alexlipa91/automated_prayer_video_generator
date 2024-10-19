@@ -28,6 +28,7 @@ class Config:
     subs_file_name: Optional[str] = "subs.srt"
 
     listed: bool = True  # whether the video should be listed on youtube or not
+    store_firestore: bool = True
 
     subs_block_size_seconds: int = 3
 

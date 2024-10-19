@@ -83,9 +83,9 @@ class YoutubeUploader(PipelineStage):
 
     playlist_id: Optional[str]
 
-    store_in_firestore_field: Optional[str]
+    store_firestore: bool
 
-    def __init__(self, date: datetime.date, title: str, description: str, tags: list[str], category: str, video_file: Path, thumbnail_file: Path, privacy_status: str, playlist_id: Optional[str] = None):
+    def __init__(self, date: datetime.date, title: str, description: str, tags: list[str], category: str, video_file: Path, thumbnail_file: Path, privacy_status: str, playlist_id: Optional[str] = None, store_firestore: bool = True):
         self.date = date
         self.video_file = video_file
         self.thumbnail_file = thumbnail_file
@@ -95,6 +95,7 @@ class YoutubeUploader(PipelineStage):
         self.category = category
         self.privacy_status = privacy_status
         self.playlist_id = playlist_id
+        self.store_firestore = store_firestore
 
         self.youtube_service: build = build(API_SERVICE_NAME, API_VERSION, credentials=Credentials.from_authorized_user_file(
             str(self.youtube_credentials_json_path)))
@@ -106,7 +107,7 @@ class YoutubeUploader(PipelineStage):
         if self.playlist_id:
             self.add_to_playlist(video_id)
             print("video added to playlist with id: {}".format(self.playlist_id))
-        if self.store_in_firestore_field:
+        if self.store_firestore:
             self.store_in_firestore(video_id=video_id)
         self.upload_thumbnail(video_id)
         print("thumbnail uploaded")
@@ -468,6 +469,7 @@ Prodotti Consigliati:
             thumbnail_file=c.thumbnail_path,
             privacy_status="public" if c.listed else "unlisted",
             playlist_id=playlist_id,
+            store_firestore=c.store_firestore,
         )
 
 
