@@ -2,8 +2,8 @@ from datetime import timedelta
 from pathlib import Path
 import subprocess
 
-from pipeline import PipelineStage
-from config import Config
+from common.pipeline import PipelineStage
+from common.config import BaseConfig
 
 from datetime import timedelta
 from srt import Subtitle, compose
@@ -13,7 +13,7 @@ class AlignmentGenerator(PipelineStage):
     """Generates a txt alignment file given a audio file and a text transcript file"""
 
     @staticmethod
-    def with_config(config: Config):
+    def with_config(config: BaseConfig):
         return AlignmentGenerator(
             audio_file_path=config.audio_path,
             text_file_path=config.transcript_path,
@@ -56,7 +56,7 @@ class SubtitlesGenerator(PipelineStage):
     """Generates a srt subtitle file given a txt alignment file"""
 
     @staticmethod
-    def with_config(config: Config):
+    def with_config(config: BaseConfig):
         return SubtitlesGenerator(
             alignment_file_path=config.alignment_path,
             destination_path=config.subs_path,

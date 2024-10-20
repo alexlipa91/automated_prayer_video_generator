@@ -1,14 +1,14 @@
 import datetime
+from pathlib import Path
 import time
 import argparse
 
-from vangelo.config import Config
-from common.audio import DemucsAudioProcessor
-from vangelo.audio import VaticanAudioDownloader, VaticanTranscriptDownloader
-from common.subtitles import AlignmentGenerator, SubtitlesGenerator
-from common.thumbnail import ThumbnailGenerator
-from vangelo.uploader import VaticanYoutubeUploader
-from common.videos import VideoComposer
+from video_generator.src.vangelo.config import Config, get_config_from_args
+from video_generator.src.common.audio import DemucsAudioProcessor, VaticanAudioDownloader, VaticanTranscriptDownloader
+from subtitles import AlignmentGenerator, SubtitlesGenerator
+from thumbnail import ThumbnailGenerator
+from uploader import VaticanYoutubeUploader, YoutubeUploader
+from videos import VideoComposer
 
 
 def run_test_mode(config: Config):
@@ -54,9 +54,12 @@ if __name__ == '__main__':
                         default=datetime.datetime.now().date(), help='date to generate the video for')
     parser.add_argument('--test-mode', action='store_true',
                         help='run test mode (faster). It skips a bunch of steps')
-
+    parser.add_argument('--output-root', type=str,
+                        default='output_santo', help='output root where to save the generated files')
+    parser.add_argument('--skip-clean-output-dir', action='store_true',
+                        help='skip cleaning the output directory')
     cli_args = parser.parse_args()
-    config = Config(date=cli_args.date)
+    config = get_config_from_args(cli_args)
 
     if cli_args.test_mode:
         run_test_mode(config)

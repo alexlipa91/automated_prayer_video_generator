@@ -2,9 +2,9 @@ import datetime
 from pathlib import Path
 import shutil
 from PIL import ImageDraw, Image, ImageFont
-from util import get_date_string
-from pipeline import PipelineStage
-from config import Config
+from common.util import get_date_string
+from common.pipeline import PipelineStage
+from common.config import BaseConfig
 
 
 class ThumbnailGenerator(PipelineStage):
@@ -14,7 +14,7 @@ class ThumbnailGenerator(PipelineStage):
     font_path: Path = Path("resources/fonts/WorkSans-VariableFont_wght.ttf")
 
     @staticmethod
-    def with_config(config: Config):
+    def with_config(config: BaseConfig):
         return ThumbnailGenerator(date=config.date, base_image_path=config.thumbnail_base_image_path, destination_path=config.thumbnail_path)
 
     def __init__(self, date: datetime.date, base_image_path: Path = Path("resources/previews/pope_sept_2024.png"), destination_path: Path = Path("output/thumbnail.png")):

@@ -4,6 +4,7 @@ docker-output/*
 output/*
 
 video_generator/src/__pycache__
+video_generator/src/*/__pycache__
 
 resources/video/*
 resources/client_secret.json

@@ -1,6 +1,6 @@
 from typing import Any, Optional
-from pipeline import PipelineStage
-from config import Config
+from common.pipeline import PipelineStage
+from common.config import BaseConfig
 from pathlib import Path
 from moviepy.editor import AudioFileClip, CompositeAudioClip, CompositeVideoClip
 from moviepy.video.io.VideoFileClip import VideoFileClip
@@ -23,7 +23,7 @@ class VideoComposer(PipelineStage):
     duration_secs: Optional[int]
 
     @staticmethod
-    def with_config(config: Config):
+    def with_config(config: BaseConfig):
         return VideoComposer(vocals_mp3=config.audio_path, background_mp3_path=config.background_music_path, destination_path=config.video_path, subs_path=config.subs_path, duration_secs=config.video_duration_secs)
 
     def __init__(self, vocals_mp3: Path, background_mp3_path: Path, destination_path: Path, subs_path: Optional[Path] = None, duration_secs: Optional[int] = None):
