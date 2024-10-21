@@ -1,51 +1,14 @@
 import datetime
+import logging
 import time
 import argparse
 
-from vangelo.config import Config
-from common.audio import DemucsAudioProcessor
-from vangelo.audio import VaticanAudioDownloader, VaticanTranscriptDownloader
-from common.subtitles import AlignmentGenerator, SubtitlesGenerator
-from common.thumbnail import ThumbnailGenerator
-from vangelo.uploader import VaticanYoutubeUploader
-from common.videos import VideoComposer
+from vangelo.config import VangeloConfig
+from vangelo.runner import VangeloRunner
+from santo_del_giorno.runner import SantoRunner
+from santo_del_giorno.config import SantoConfig
 
-
-def run_test_mode(config: Config):
-    config.subs_file_name = None
-    config.skip_clean_output_dir = True
-
-    print("Running with config: {}".format(config.__dict__))
-    config.init_environment()
-
-    start = time.time()
-
-    VaticanAudioDownloader.with_config(config).run()
-    DemucsAudioProcessor.with_config(config).run()
-    VideoComposer.with_config(config).run()
-    ThumbnailGenerator.with_config(config).run()
-
-    end = time.time()
-    print("Done in {}".format(datetime.timedelta(seconds=end - start)))
-
-
-def run(config: Config):
-    print("Running with config: {}".format(config.__dict__))
-    config.init_environment()
-
-    start = time.time()
-
-    VaticanAudioDownloader.with_config(config).run()
-    VaticanTranscriptDownloader.with_config(config).run()
-    DemucsAudioProcessor.with_config(config).run()
-    AlignmentGenerator.with_config(config).run()
-    SubtitlesGenerator.with_config(config).run()
-    VideoComposer.with_config(config).run()
-    ThumbnailGenerator.with_config(config).run()
-    VaticanYoutubeUploader(config).run()
-
-    end = time.time()
-    print("Done in {}".format(datetime.timedelta(seconds=end - start)))
+logger = logging.getLogger("root")
 
 
 if __name__ == '__main__':
@@ -53,12 +16,19 @@ if __name__ == '__main__':
     parser.add_argument('--date', type=datetime.date,
                         default=datetime.datetime.now().date(), help='date to generate the video for')
     parser.add_argument('--test-mode', action='store_true',
-                        help='run test mode (faster). It skips a bunch of steps')
+                        help='run pipeline test mode (faster). It skips a bunch of steps')
+    parser.add_argument('--pipeline', default='vangelo', choices=["vangelo", "santo"],
+                        help="Which pipeline to run")
 
     cli_args = parser.parse_args()
-    config = Config(date=cli_args.date)
 
-    if cli_args.test_mode:
-        run_test_mode(config)
+    if cli_args.pipeline == "vangelo":
+        runner = VangeloRunner(VangeloConfig(
+            date=cli_args.date), test_mode=cli_args.test_mode)
+    elif cli_args.pipeline == "santo":
+        runner = SantoRunner(SantoConfig(date=cli_args.date),
+                             test_mode=cli_args.test_mode)
     else:
-        run(config)
+        raise ("Unknown pipeline")
+
+    runner.run()

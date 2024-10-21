@@ -7,10 +7,10 @@ import srt as srt
 from common.config import BaseConfig
 
 
-from common.pipeline import PipelineStage
+from common.pipeline import WithOutputStage, skip_if_exists
 
 
-class DemucsAudioProcessor(PipelineStage):
+class DemucsAudioProcessor(WithOutputStage):
     """
     Uses demucs to split the audio into vocals and accompaniment
     self.destination_path will contain the vocal mp3 file
@@ -25,7 +25,7 @@ class DemucsAudioProcessor(PipelineStage):
         self.original_mp3_path = original_mp3_path
         self.destination_path = destination_path
 
-    def run(self):
+    def _run(self):
         parent_path = self.original_mp3_path.parent
         # todo considering warming up model by downloading it in the dockerbuild
         print("Splitting `{}` using demucs and writing to {}".format(

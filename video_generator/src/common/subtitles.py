@@ -2,14 +2,14 @@ from datetime import timedelta
 from pathlib import Path
 import subprocess
 
-from common.pipeline import PipelineStage
+from common.pipeline import WithOutputStage, skip_if_exists
 from common.config import BaseConfig
 
 from datetime import timedelta
 from srt import Subtitle, compose
 
 
-class AlignmentGenerator(PipelineStage):
+class AlignmentGenerator(WithOutputStage):
     """Generates a txt alignment file given a audio file and a text transcript file"""
 
     @staticmethod
@@ -24,9 +24,7 @@ class AlignmentGenerator(PipelineStage):
         self.text_file_path = text_file_path
         self.destination_path = destination_path
 
-    def run(self):
-        print(
-            f"Generating alignment file for {self.audio_file_path} and {self.text_file_path}")
+    def _run(self):
         p = subprocess.Popen([
             "ctc-forced-aligner",
             "--audio_path",
@@ -52,7 +50,7 @@ class AlignmentGenerator(PipelineStage):
                 f"Alignment file {self.destination_path} generated successfully")
 
 
-class SubtitlesGenerator(PipelineStage):
+class SubtitlesGenerator(WithOutputStage):
     """Generates a srt subtitle file given a txt alignment file"""
 
     @staticmethod
@@ -96,9 +94,8 @@ class SubtitlesGenerator(PipelineStage):
 
         return new_subs
 
+    @skip_if_exists
     def run(self):
-        print(
-            f"Reading alignment file {self.alignment_file_path} and writing subs to {self.destination_path}")
         # read alignment file
         subs = []
         with open(self.alignment_file_path, "r") as f:

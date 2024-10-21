@@ -3,11 +3,11 @@ from pathlib import Path
 import shutil
 from PIL import ImageDraw, Image, ImageFont
 from common.util import get_date_string
-from common.pipeline import PipelineStage
+from common.pipeline import WithOutputStage, skip_if_exists
 from common.config import BaseConfig
 
 
-class ThumbnailGenerator(PipelineStage):
+class ThumbnailGenerator(WithOutputStage):
 
     date: datetime.date
     destination_path: str
@@ -22,8 +22,7 @@ class ThumbnailGenerator(PipelineStage):
         self.base_image_path = base_image_path
         self.destination_path = destination_path
 
-    def run(self):
-        print(f"Generating thumbnail to {self.destination_path}")
+    def _run(self):
         if self.base_image_path == "resources/images/pope_sept_2024.png":
             self.add_text_on_image()
         else:

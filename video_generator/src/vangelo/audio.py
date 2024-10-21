@@ -1,17 +1,19 @@
 import datetime
+import logging
 from pathlib import Path
 from typing import Optional
 
 import bs4
 import requests
 
-from common.pipeline import PipelineStage
-from vangelo.config import Config
+from common.pipeline import WithOutputStage
+from vangelo.config import VangeloConfig
 from pydub import AudioSegment
-from vangelo.config import Config
+
+logger = logging.getLogger("root")
 
 
-class VaticanAudioDownloader(PipelineStage):
+class VaticanAudioDownloader(WithOutputStage):
 
     source_url: str
     destination_path: Path
@@ -19,15 +21,14 @@ class VaticanAudioDownloader(PipelineStage):
     duration_secs: Optional[int]
 
     @staticmethod
-    def with_config(config: Config):
+    def with_config(config: VangeloConfig):
         return VaticanAudioDownloader(
             date=config.date,
-            language=config.language,
             destination_path=config.audio_path,
             duration_secs=config.video_duration_secs)
 
-    def __init__(self, date: datetime.date, destination_path: Path, language: str = "it", duration_secs: Optional[int] = None):
-        self.source_url = get_vatican_source_url(date, language)
+    def __init__(self, date: datetime.date, destination_path: Path, duration_secs: Optional[int] = None):
+        self.source_url = get_vatican_source_url(date)
         self.destination_path = destination_path
         self.duration_secs = duration_secs
 
@@ -41,7 +42,7 @@ class VaticanAudioDownloader(PipelineStage):
         first_x_seconds.export(self.destination_path, format="mp3")
 
     def run(self) -> Path:
-        print("downloading audio from {} into {}".format(
+        logger.info("Downloading audio from {} into {}".format(
             self.source_url, self.destination_path))
         req = requests.get(self.source_url)
         soup = bs4.BeautifulSoup(req.content, "html.parser")
@@ -60,17 +61,16 @@ class VaticanAudioDownloader(PipelineStage):
         self.maybe_cut_to_secs()
 
 
-class VaticanTranscriptDownloader(PipelineStage):
+class VaticanTranscriptDownloader(WithOutputStage):
 
     @staticmethod
-    def with_config(config: Config):
+    def with_config(config: VangeloConfig):
         return VaticanTranscriptDownloader(
             date=config.date,
-            language=config.language,
             destination_path=config.transcript_path)
 
-    def __init__(self, date: datetime.date, destination_path: Path, language: str = "it"):
-        self.source_url = get_vatican_source_url(date, language)
+    def __init__(self, date: datetime.date, destination_path: Path):
+        self.source_url = get_vatican_source_url(date)
         self.destination_path = destination_path
 
     def process_div(self, div: list[bs4.element.Tag], text_tokens: list[str]) -> list[str]:
@@ -79,8 +79,8 @@ class VaticanTranscriptDownloader(PipelineStage):
                 if not c.name == "br":
                     text_tokens.append(c.getText().strip())
 
-    def run(self):
-        print("downloading transcript from {} to {}".format(
+    def _run(self):
+        logger.info("downloading transcript from {} to {}".format(
             self.source_url, self.destination_path))
         req = requests.get(self.source_url)
         soup = bs4.BeautifulSoup(req.content, "html.parser")
@@ -109,13 +109,7 @@ class VaticanTranscriptDownloader(PipelineStage):
             text_file.write('\n'.join(final_texts))
 
 
-def get_vatican_source_url(date: datetime.date, language: str = "it"):
+def get_vatican_source_url(date: datetime.date):
     url_date_part = "{}/{}/{}".format(str(date.year).zfill(
         2), str(date.month).zfill(2), str(date.day).zfill(2))
-    if language == "it":
-        return "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}.html".format(
-            url_date_part)
-    if language == "es":
-        return "https://www.vaticannews.va/es/evangelio-de-hoy/{}".format(
-            url_date_part)
-    raise Exception("Language not supported")
+    return "https://www.vaticannews.va/it/vangelo-del-giorno-e-parola-del-giorno/{}.html".format(url_date_part)

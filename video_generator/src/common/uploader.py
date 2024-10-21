@@ -5,8 +5,10 @@
 # youtube.com/@NonoMartinezAlonso
 # https://github.com/youtube/api-samples/blob/master/python/upload_video.py
 
+from dataclasses import dataclass
 import datetime
 import io
+import logging
 import os
 from pathlib import Path
 import sys
@@ -25,7 +27,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from firebase_admin import firestore
 from google.oauth2 import service_account
 
-from common.pipeline import PipelineStage
+from common.pipeline import Stage, WithOutputStage
 from common.config import BaseConfig
 
 # Explicitly tell the underlying HTTP transport library not to retry, since
@@ -67,51 +69,45 @@ API_VERSION = 'v3'
 
 VALID_PRIVACY_STATUSES = ('public', 'private', 'unlisted')
 
+logger = logging.getLogger("root")
 
-class YoutubeUploader(PipelineStage):
+
+@dataclass
+class YoutubeUploader(Stage):
+    date: datetime.date
     title: str
     description: str
     tags: list[str]
     category: str
     privacy_status: str
+    video_file: Path
 
+    store_firestore_field: Optional[str] = "video_id"
     youtube_credentials_json_path: str = "resources/credentials.json"
     firestore_sa_path: str = "resources/prayers-channel-sa.json"
 
-    video_file: Path
-    thumbnail_file: Path
+    thumbnail_file: Optional[Path] = None
+    playlist_id: Optional[str] = None
 
-    playlist_id: Optional[str]
-
-    store_firestore: bool
-
-    def __init__(self, date: datetime.date, title: str, description: str, tags: list[str], category: str, video_file: Path, thumbnail_file: Path, privacy_status: str, playlist_id: Optional[str] = None, store_firestore: bool = True):
-        self.date = date
-        self.video_file = video_file
-        self.thumbnail_file = thumbnail_file
-        self.title = title
-        self.description = description
-        self.tags = tags
-        self.category = category
-        self.privacy_status = privacy_status
-        self.playlist_id = playlist_id
-        self.store_firestore = store_firestore
-
+    def __post_init__(self):
         self.youtube_service: build = build(API_SERVICE_NAME, API_VERSION, credentials=Credentials.from_authorized_user_file(
             str(self.youtube_credentials_json_path)))
 
     def run(self):
-        print("uploading video...")
+        super().run()
         video_id = self.upload_video()
-        print("video uploaded with id: {}".format(video_id))
+        logger.info("Video uploaded with id: {}".format(video_id))
         if self.playlist_id:
             self.add_to_playlist(video_id)
-            print("video added to playlist with id: {}".format(self.playlist_id))
-        self.upload_thumbnail(video_id)
-        print("thumbnail uploaded")
-        if self.store_firestore:
-            self.store_in_firestore(video_id=video_id)
-        print("stored id in firestore")
+            logger.info(
+                "Video added to playlist with id: {}".format(self.playlist_id))
+        if self.thumbnail_file:
+            self.upload_thumbnail(video_id)
+            logger.info("Thumbnail uploaded")
+        if self.store_firestore_field:
+            self.store_in_firestore(video_id=self.store_firestore_field)
+            logger.info("Updated firestore field {}".format(
+                self.store_firestore_field))
 
     def upload_thumbnail(self, video_id: str):
         request = self.youtube_service.thumbnails().set(

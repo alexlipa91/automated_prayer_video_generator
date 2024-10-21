@@ -1,43 +1,34 @@
 from dataclasses import dataclass
-import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 import locale
-import firebase_admin
+import pprint
 import os
 
 
 @dataclass
 class BaseConfig:
 
+    store_firestore_field: str
+
+    public_list_youtube: bool = False
     date: datetime.date = datetime.now().date()
-    
-    skip_clean_output_dir: bool = False
+
     output_root: Path = Path("output")
-    
+
     video_duration_secs: Optional[int] = None
-    language: str = "it"
 
     video_file_name: str = "video.mp4"
     transcript_file_name: str = "transcript.txt"
     audio_file_name: str = "audio.mp3"
     thumbnail_file_name: str = "thumbnail.png"
-    subs_file_name: Optional[str] = "subs.srt"
+    subs_file_name: str = "subs.srt"
+    alignment_file_name: str = "alignment.txt"
     subs_block_size_seconds: int = 3
 
-    listed: bool = True  # whether the video should be listed on youtube or not
-    store_firestore: bool = True
-
-    def init_environment(self):
-        # delete the output root if it exists
-        if not self.skip_clean_output_dir and self.output_root.exists():
-            print(f"Deleting output directory: {self.output_root}")
-            shutil.rmtree(self.output_root)
+    def __post_init__(self):
         os.makedirs(self.output_root, exist_ok=True)
-        self.set_locale()
-
-    def set_locale(self):
         locale.setlocale(locale.LC_ALL, str('it_IT.UTF-8'))
 
     @property
@@ -65,3 +56,6 @@ class BaseConfig:
     @property
     def thumbnail_path(self) -> Path:
         return self.output_root.joinpath(self.thumbnail_file_name)
+
+    def __str__(self):
+        return pprint.pformat(self.__dict__)

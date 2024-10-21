@@ -1,5 +1,5 @@
 from typing import Any, Optional
-from common.pipeline import PipelineStage
+from common.pipeline import WithOutputStage
 from common.config import BaseConfig
 from pathlib import Path
 from moviepy.editor import AudioFileClip, CompositeAudioClip, CompositeVideoClip
@@ -9,7 +9,7 @@ from moviepy.video.tools.subtitles import SubtitlesClip
 from moviepy.audio.fx.volumex import volumex
 
 
-class VideoComposer(PipelineStage):
+class VideoComposer(WithOutputStage):
     """Composes the final video
 
     `vocals_mp3` is the path to the vocals mp3 file
@@ -41,7 +41,7 @@ class VideoComposer(PipelineStage):
             return int(AudioFileClip(str(self.vocals_mp3)).duration) + 10
         return None
 
-    def run(self):
+    def _run(self):
         # audio
         start_audio_at = 1
 
@@ -83,10 +83,3 @@ class VideoComposer(PipelineStage):
         print("writing final video to {}".format(self.destination_path))
         final_video.write_videofile(
             str(self.destination_path), verbose=False, logger=None)
-
-
-if __name__ == "__main__":
-    c = Config()
-    c.video_duration_secs = 30
-    video_composer = VideoComposer.with_config(config=c)
-    video_composer.run()

@@ -1,10 +1,10 @@
 import datetime
 from common.uploader import YoutubeUploader
-from vangelo.config import Config
+from vangelo.config import VangeloConfig
 
 
 class VaticanYoutubeUploader(YoutubeUploader):
-    def __init__(self, c: Config):
+    def __init__(self, c: VangeloConfig):
         title = "Vangelo del Giorno - {}".format(
             c.date.strftime("%A %d %B %Y").title())
         description = """
@@ -38,7 +38,7 @@ Prodotti Consigliati:
             category=category,
             video_file=c.video_path,
             thumbnail_file=c.thumbnail_path,
-            privacy_status="public" if c.listed else "unlisted",
+            privacy_status="public" if c.public_list_youtube else "unlisted",
             playlist_id=playlist_id,
-            store_firestore=c.store_firestore,
+            store_firestore_field="video_id",
         )
